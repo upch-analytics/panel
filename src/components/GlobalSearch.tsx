@@ -4,6 +4,7 @@ import { Search } from 'lucide-react'
 import { useDataState } from '../data/load'
 import { carry } from '../data/filters'
 import { findAppeal } from '../data/records'
+import { findCreated } from '../data/created'
 
 // Поиск в верхней панели: субъект по названию или обращение по номеру (например 38-2609-4-0013)
 
@@ -25,7 +26,7 @@ export function GlobalSearch() {
     if (/^\d{2}-\d{4}-\d-\d{1,4}$/.test(term)) {
       const [c, ym, cat, seq] = term.split('-')
       const id = `${c}-${ym}-${cat}-${seq.padStart(4, '0')}`
-      const a = findAppeal(state.data, id)
+      const a = findCreated(id) ?? findAppeal(state.data, id)
       out.push(a
         ? { key: id, label: `Обращение № ${id}`, hint: a.topic, to: `/appeals/${id}${carry(params)}` }
         : { key: 'none', label: `Обращение № ${id} не найдено`, hint: 'Проверьте номер', to: '' })

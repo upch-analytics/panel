@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { NavLink, useLocation, useSearchParams } from 'react-router-dom'
-import { BarChart3, FileText, Inbox, MapPin, Map as MapIcon, Menu, ShieldCheck, X, RotateCw } from 'lucide-react'
+import { BarChart3, FileText, Inbox, MapPin, Map as MapIcon, Menu, ShieldCheck, X, RotateCw, Plus } from 'lucide-react'
 import { useDataState } from '../data/load'
 import { parsePeriod, periodLabel } from '../data/period'
 import { GlobalSearch } from './GlobalSearch'
@@ -26,6 +26,10 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
           <span className="block text-sm text-menu-muted">Аналитика обращений</span>
         </span>
       </div>
+      <NavLink to="/appeals/new" onClick={onNavigate}
+        className={({ isActive }) => `flex items-center justify-center gap-2 rounded-full border px-4 py-2.5 font-semibold transition-colors ${isActive ? 'border-white bg-white text-menu' : 'border-white/25 bg-white/10 text-white hover:bg-white/20'}`}>
+        <Plus size={18} aria-hidden="true" /> Создать обращение
+      </NavLink>
       <nav aria-label="Разделы" className="flex flex-col gap-1">
         {NAV.map(({ to, label, icon: Icon, end, also }) => (
           <NavLink
@@ -34,7 +38,7 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
             end={end}
             onClick={onNavigate}
             // Страница отдельного региона относится к разделу «Региональная аналитика»
-            className={({ isActive: active }) => { const isActive = active || (!!also && pathname.startsWith(also)); return `flex items-center gap-2.5 rounded-full px-4 py-2.5 transition-colors ${
+            className={({ isActive: active }) => { const isActive = (active && !(to === '/appeals' && pathname === '/appeals/new')) || (!!also && pathname.startsWith(also)); return `flex items-center gap-2.5 rounded-full px-4 py-2.5 transition-colors ${
                 isActive ? 'bg-accent font-semibold text-white shadow-[0_8px_24px_-10px_rgb(42_85_196/0.9)]' : 'text-menu-muted hover:bg-white/6 hover:text-white'
               }` }}
           >

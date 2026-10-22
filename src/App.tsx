@@ -5,6 +5,7 @@ import { RegionPage } from './pages/RegionPage'
 import { RegionsList } from './pages/RegionsList'
 import { AppealCard, Appeals } from './pages/Appeals'
 import { Reports } from './pages/Reports'
+import { CreateAppeal } from './pages/CreateAppeal'
 import { MapPage, Overview } from './pages/Overview'
 
 export default function App() {
@@ -16,6 +17,7 @@ export default function App() {
         <Route path="/regions" element={<RegionsList />} />
         <Route path="/region/:code" element={<RegionPage />} />
         <Route path="/appeals" element={<Appeals />} />
+        <Route path="/appeals/new" element={<CreateAppeal />} />
         <Route path="/appeals/:id" element={<AppealCard />} />
         <Route path="/reports" element={<Reports />} />
         <Route path="*" element={<NotFound />} />

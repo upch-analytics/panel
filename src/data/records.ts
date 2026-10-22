@@ -78,7 +78,7 @@ export interface Appeal {
   overdue: boolean
   overdueDays: number
   repeat: boolean
-  channel: (typeof CHANNELS)[number]
+  channel: (typeof CHANNELS)[number] | 'Горячая линия'
   addressee: 'УПЧ в РФ' | 'УПЧ субъекта'
   topic: string
   organ: string

@@ -9,6 +9,7 @@ import { downloadCsv, stamp, toCsv } from '../data/csv'
 import { FilterBar } from '../components/FilterBar'
 import { useToast } from '../components/Toast'
 import { NotFound, PageTitle } from './Common'
+import { findCreated, useCreated, type CreatedAppeal } from '../data/created'
 
 const FOLDERS = [
   { id: 'all', label: 'Все', test: () => true },
@@ -51,11 +52,15 @@ export function Appeals() {
   const page = Math.max(1, Number(p.get('page')) || 1)
   const [q, setQ] = useState(p.get('q') ?? '')
 
+  const created = useCreated()
   const base = useMemo(() => {
     if (!f.range) return []
     const codes = region ? [region] : f.codes
-    return scopeAppeals(data, { range: f.range, codes, cats: f.cat ? [f.cat] : undefined })
-  }, [data, f.range, f.codes, f.cat, region])
+    const range = f.range
+    // Созданные через горячую линию обращения добавляются к демонстрационным по тем же условиям
+    const own = created.filter(a => a.month >= range.from && a.month <= range.to && (!codes || codes.includes(a.code)) && (!f.cat || a.cat === f.cat))
+    return [...own, ...scopeAppeals(data, { range, codes, cats: f.cat ? [f.cat] : undefined })]
+  }, [data, f.range, f.codes, f.cat, region, created])
 
   const counts = useMemo(() => Object.fromEntries(FOLDERS.map(x => [x.id, base.filter(x.test).length])), [base])
   const names = useMemo(() => new Map(data.regions.map(r => [r.code, r.name])), [data])
@@ -205,12 +210,13 @@ export function AppealCard() {
   const { data } = useData()
   const f = useFilters()
   const toast = useToast()
-  const a = useMemo(() => findAppeal(data, id), [data, id])
+  const own = findCreated(id)
+  const a = useMemo(() => own ?? findAppeal(data, id), [data, id, own])
   if (!a) return <NotFound />
   const region = data.regions.find(r => r.code === a.code)!
   const cat = data.meta.categories.find(c => c.id === a.cat)!
-  const tl = timeline(a, data.meta.today)
-  const related = relatedAppeals(data, a)
+  const tl = own ? [{ date: a.received, text: 'Поступило: горячая линия, анкета заполнена оператором' }, { date: a.received, text: `Зарегистрировано, адресат: ${a.addressee}. Ожидает назначения исполнителя` }] as ReturnType<typeof timeline> : timeline(a, data.meta.today)
+  const related = own ? [] : relatedAppeals(data, a)
   const back = `/appeals${carry(f.params, Object.fromEntries(['folder', 'region', 'status', 'q', 'sort', 'page'].flatMap(k => (f.params.get(k) ? [[k, f.params.get(k)!]] : []))))}`
 
   return (
@@ -230,7 +236,8 @@ export function AppealCard() {
         <div className="flex flex-col gap-5">
           <section aria-labelledby="sum-title" className="card p-5">
             <h2 id="sum-title" className="text-xl font-semibold">{a.topic}</h2>
-            <p className="mt-2 max-w-[70ch] text-lg">{summary(a)}</p>
+            <p className="mt-2 max-w-[70ch] text-lg whitespace-pre-line">{own ? own.description : summary(a)}</p>
+            {own?.urgent && <p className="mt-3 inline-block rounded-full bg-bad-soft px-3 py-1 text-sm font-semibold text-bad">Срочное: угроза здоровью или последствия уже наступают</p>}
             <p className="mt-3 text-sm text-muted">Заявитель: {a.applicant} (обезличенный номер, персональные данные не отображаются)</p>
           </section>
 
@@ -287,7 +294,7 @@ export function AppealCard() {
           <section aria-labelledby="doc-title" className="card p-5">
             <h2 id="doc-title" className="text-xl font-semibold">Документы</h2>
             <ul className="mt-2 flex flex-col gap-1.5 text-sm">
-              {documents(a).map(d => <li key={d} className="flex items-center gap-2"><FileText size={16} className="text-muted" aria-hidden="true" />{d}</li>)}
+              {(own ? ['Анкета обращения (горячая линия)'] : documents(a)).map(d => <li key={d} className="flex items-center gap-2"><FileText size={16} className="text-muted" aria-hidden="true" />{d}</li>)}
             </ul>
             <p className="mt-2 text-sm text-muted">Названия документов демонстрационные, файлы не прикреплены.</p>
           </section>
@@ -300,11 +307,25 @@ export function AppealCard() {
                     <li key={r.id}><Link to={`/appeals/${r.id}${carry(f.params)}`} className="num font-medium text-accent underline underline-offset-4">№ {r.id}</Link> <span className="text-muted">от {ruDate(r.received)}: {STATUS[r.status].label.toLowerCase()}</span></li>
                   ))}
                 </ul>
-              ) : <p className="mt-2 text-sm text-muted">Предыдущее обращение подано до начала периода, охваченного системой.</p>}
+              ) : <p className="mt-2 text-sm text-muted">{own ? 'По словам заявителя, он уже обращался по этому вопросу. Предыдущие обращения нужно найти при рассмотрении.' : 'Предыдущее обращение подано до начала периода, охваченного системой.'}</p>}
             </section>
           )}
+          {own && <Questionnaire a={own} />}
         </div>
       </div>
     </>
+  )
+}
+
+/** Ответы анкеты обращения, созданного оператором горячей линии */
+function Questionnaire({ a }: { a: CreatedAppeal }) {
+  return (
+    <section aria-labelledby="q-title" className="card p-5">
+      <h2 id="q-title" className="text-xl font-semibold">Анкета обращения</h2>
+      <dl className="mt-3 flex flex-col gap-2.5 text-sm">
+        <div><dt className="text-muted">Заявитель обращается</dt><dd className="m-0">{a.who}</dd></div>
+        {a.answers.map(x => <div key={x.q}><dt className="text-muted">{x.q}</dt><dd className="m-0">{x.a}</dd></div>)}
+      </dl>
+    </section>
   )
 }
