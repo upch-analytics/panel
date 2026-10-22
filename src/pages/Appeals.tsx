@@ -124,7 +124,28 @@ export function Appeals() {
               <Download size={16} aria-hidden="true" /> Выгрузить в CSV
             </button>
           </div>
-          <div className="overflow-x-auto border-t border-line">
+          {/* Телефон: карточки вместо таблицы, чтобы статус и срок были видны без прокрутки вбок */}
+          <ul className="border-t border-line md:hidden">
+            {shown.map(a => (
+              <li key={a.id} className="border-b border-line last:border-0">
+                <Link to={`/appeals/${a.id}${carry(p)}`} className="block px-4 py-3 hover:bg-surface-hover">
+                  <span className="flex items-baseline justify-between gap-3">
+                    <span className="num font-medium text-accent">№ {a.id}</span>
+                    <span className="text-sm text-muted">{ruDate(a.received)}</span>
+                  </span>
+                  <span className="mt-1 block">{a.topic}</span>
+                  <span className="block text-sm text-muted">{region ? a.muni : `${names.get(a.code)}, ${a.muni}`}. {a.executor}</span>
+                  <span className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
+                    <StatusBadge s={a.status} short />
+                    {a.repeat && <span className="rounded-full bg-mid-soft px-2 py-0.5 text-xs font-semibold text-mid">Повторное</span>}
+                    <DeadlineCell a={a} />
+                  </span>
+                </Link>
+              </li>
+            ))}
+            {!shown.length && <li className="px-4 py-10 text-center text-muted">Обращений по заданным условиям нет. Измените фильтры или папку.</li>}
+          </ul>
+          <div className="hidden overflow-x-auto border-t border-line md:block">
             <table className="w-full min-w-[1000px] text-sm">
               <thead className="bg-bg/60 text-left">
                 <tr className="border-b border-line">
