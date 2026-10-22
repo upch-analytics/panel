@@ -16,7 +16,7 @@
 
 React 19, TypeScript, Vite 8, Tailwind CSS 4 (тема в `src/index.css`, блок `@theme`),
 react-router (HashRouter: адреса `#/region/38`), d3-geo и d3-zoom для карты, Recharts для графиков,
-lucide-react для иконок. Шрифты Golos Text и Source Serif 4 подключены локально (`@fontsource`).
+lucide-react для иконок. Шрифты Manrope и Unbounded подключены локально (`@fontsource-variable`).
 Серверной части нет: только статические JSON в `public/data/`.
 
 ## Структура
