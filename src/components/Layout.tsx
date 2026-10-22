@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { NavLink, useLocation, useSearchParams } from 'react-router-dom'
-import { BarChart3, FileText, Inbox, MapPin, Map as MapIcon, Menu, ShieldCheck, X, RotateCw, Plus } from 'lucide-react'
+import { BarChart3, FileText, Inbox, MapPin, Map as MapIcon, Menu, ShieldCheck, X, RotateCw, Plus, LogOut } from 'lucide-react'
 import { useDataState } from '../data/load'
 import { parsePeriod, periodLabel } from '../data/period'
 import { GlobalSearch } from './GlobalSearch'
@@ -47,7 +47,13 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
           </NavLink>
         ))}
       </nav>
-      <p className="mx-1 mt-auto rounded-[20px] bg-white/5 p-4 text-xs text-menu-muted">Прототип для хакатона. Данные демонстрационные.</p>
+      <div className="mt-auto flex flex-col gap-2">
+        {/* Возврат на единый вход: там выбирается роль (аппарат УПЧ или ведомство) */}
+        <a href="https://upch-analytics.github.io/" className="flex items-center gap-3 rounded-full px-4 py-2.5 text-menu-muted transition-colors hover:bg-white/6 hover:text-white">
+          <LogOut size={18} aria-hidden="true" /> Выйти
+        </a>
+        <p className="mx-1 rounded-[20px] bg-white/5 p-4 text-xs text-menu-muted">Прототип для хакатона. Данные демонстрационные.</p>
+      </div>
     </div>
   )
 }
