@@ -110,6 +110,43 @@ export function RegionPage() {
           <h2 className="text-xl font-semibold">Нет данных</h2>
           <p className="mt-2 max-w-2xl text-muted">Уполномоченный по правам человека в субъекте пока не подключен к ФГИС УПЧ, поэтому обращения региона в системе не отображаются. Отсутствие данных не означает отсутствия проблем.</p>
         </div>
+        {(() => {
+          // Чем можно воспользоваться вместо данных региона: соседи по округу и сам округ
+          const near = data.regions.filter(x => x.district === region.district && x.connected && x.code !== region.code).sort((a, b) => a.name.localeCompare(b.name, 'ru'))
+          const off = data.regions.filter(x => !x.connected && x.code !== region.code)
+          const fdName = `${data.meta.districts[region.district]} федеральный округ`
+          return (
+            <div className="mt-5 grid gap-5 lg:grid-cols-[2fr_1fr]">
+              <section aria-labelledby="near-title" className="rounded-lg border border-line bg-surface">
+                <div className="px-5 pt-4 pb-3">
+                  <h2 id="near-title" className="font-serif text-2xl font-semibold">Подключенные субъекты округа</h2>
+                  <p className="mt-1 text-sm text-muted">{fdName}: {near.length} {numWord(near.length, 'субъект', 'субъекта', 'субъектов')} с данными в системе</p>
+                </div>
+                <ul className="grid border-t border-line sm:grid-cols-2">
+                  {near.map(x => (
+                    <li key={x.code} className="border-b border-line sm:odd:border-r">
+                      <Link to={`/region/${x.code}${carry(f.params)}`} className="flex items-center gap-2 px-5 py-2.5 text-sm hover:bg-surface-hover">
+                        <span className="min-w-0 flex-1 truncate">{x.name}</span>
+                        <ChevronRight size={16} className="shrink-0 text-muted" aria-hidden="true" />
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+                <div className="flex flex-wrap gap-x-6 gap-y-2 px-5 py-3 text-sm">
+                  <Link to={`/${carry(f.params, { fd: region.district })}`} className="font-medium text-accent underline underline-offset-4 hover:text-accent-hover">Обзор по округу</Link>
+                  <Link to={`/reports${carry(f.params, { t: `fd:${region.district}` })}`} className="font-medium text-accent underline underline-offset-4 hover:text-accent-hover">Отчет по округу</Link>
+                </div>
+              </section>
+              <section aria-labelledby="off-title" className="rounded-lg border border-line bg-surface p-5">
+                <h2 id="off-title" className="font-serif text-2xl font-semibold">Также не подключены</h2>
+                <ul className="mt-3 flex flex-col gap-2 text-sm">
+                  {off.map(x => <li key={x.code}><Link to={`/region/${x.code}${carry(f.params)}`} className="text-accent underline-offset-4 hover:underline">{x.name}</Link></li>)}
+                </ul>
+                <Link to={`/regions${carry(f.params)}`} className="mt-4 inline-block text-sm font-medium text-accent underline underline-offset-4 hover:text-accent-hover">Все субъекты и охват системой</Link>
+              </section>
+            </div>
+          )
+        })()}
       </>
     )
   }
