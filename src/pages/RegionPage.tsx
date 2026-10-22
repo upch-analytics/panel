@@ -120,7 +120,7 @@ export function RegionPage() {
               <section aria-labelledby="near-title" className="rounded-lg border border-line bg-surface">
                 <div className="px-5 pt-4 pb-3">
                   <h2 id="near-title" className="font-serif text-2xl font-semibold">Подключенные субъекты округа</h2>
-                  <p className="mt-1 text-sm text-muted">{fdName}: {near.length} {numWord(near.length, 'субъект', 'субъекта', 'субъектов')} с данными в системе</p>
+                  <p className="mt-1 text-sm text-muted">{fdName}: {numWord(near.length, 'субъект', 'субъекта', 'субъектов')} с данными в системе</p>
                 </div>
                 <ul className="grid border-t border-line sm:grid-cols-2">
                   {near.map(x => (
