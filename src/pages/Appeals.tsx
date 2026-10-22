@@ -28,8 +28,8 @@ const PAGE = 25
 
 /** Открытое просроченное: требует действия сейчас; закрытое с опозданием: факт, приглушенно */
 function DeadlineCell({ a }: { a: Appeal }) {
-  if (a.overdue && !a.doneDate) return <span className="font-medium text-bad">просрочено на {a.overdueDays} дн.</span>
-  if (a.overdue) return <span className="text-muted">ответ с опозданием {a.overdueDays} дн.</span>
+  if (a.overdue && !a.doneDate) return <span className="font-medium text-bad">просрочено {a.overdueDays} дн.</span>
+  if (a.overdue) return <span className="text-muted" title="Рассмотрено с нарушением срока">с опозданием {a.overdueDays} дн.</span>
   if (a.doneDate) return <span className="text-muted">рассмотрено {ruDate(a.doneDate)}</span>
   return <span className="text-muted">до {ruDate(a.deadline)}</span>
 }
@@ -140,11 +140,11 @@ export function Appeals() {
                   <tr key={a.id} className="border-b border-line last:border-0 hover:bg-surface-hover">
                     <td className="px-3 py-2.5 whitespace-nowrap"><Link to={`/appeals/${a.id}${carry(p)}`} className="num font-medium text-accent underline-offset-4 hover:underline">№ {a.id}</Link></td>
                     <td className="px-3 py-2.5 whitespace-nowrap">{ruDate(a.received)}</td>
-                    <td className="min-w-64 px-3 py-2.5"><span className="block">{a.topic}</span><span className="text-muted">{region ? a.muni : `${names.get(a.code)}, ${a.muni}`}</span></td>
+                    <td className="min-w-56 px-3 py-2.5"><span className="block">{a.topic}</span><span className="text-muted">{region ? a.muni : `${names.get(a.code)}, ${a.muni}`}</span></td>
                     <td className="px-3 py-2.5">{catName.get(a.cat)}</td>
                     <td className="px-3 py-2.5 whitespace-nowrap">{a.executor}</td>
                     <td className="px-3 py-2.5"><span className="flex flex-wrap gap-1"><StatusBadge s={a.status} short />{a.repeat && <span className="inline-block rounded-full bg-mid-soft px-2 py-0.5 text-xs font-semibold text-mid">Повторное</span>}</span></td>
-                    <td className="w-36 px-3 py-2.5 text-right"><DeadlineCell a={a} /></td>
+                    <td className="px-3 py-2.5 text-right whitespace-nowrap"><DeadlineCell a={a} /></td>
                   </tr>
                 ))}
                 {!shown.length && (
