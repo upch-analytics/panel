@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Направление Б: Пульт</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+<script src="map.js"></script>
+<style>
+  :root {
+    --bg: #F1F2EE; --card: #FFFFFF; --line: #DFE1DC; --ink: #18202B; --muted: #525C69;
+    --menu: #162236; --menu-ink: #FFFFFF; --menu-muted: #A9B4C6; --accent: #0A57C9; --accent-soft: #E7EFFC;
+    --green: #23704A; --warn: #A3401A;
+    --sans: 'IBM Plex Sans', system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.45 var(--sans); font-variant-numeric: tabular-nums; }
+  .app { display: grid; grid-template-columns: 72px 1fr; min-height: 100vh; }
+  aside { background: var(--menu); display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 14px 0; }
+  .mark { width: 40px; height: 40px; border-radius: 8px; background: var(--accent); display: grid; place-items: center; margin-bottom: 14px; }
+  aside a { width: 60px; padding: 8px 0 6px; border-radius: 8px; color: var(--menu-muted); text-decoration: none; display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 11.5px; line-height: 1.15; text-align: center; }
+  aside a svg { width: 20px; height: 20px; }
+  aside a:hover { color: #fff; background: rgba(255,255,255,.07); }
+  aside a[aria-current] { color: #fff; background: rgba(255,255,255,.1); box-shadow: inset 3px 0 0 #5B93F0; }
+  a:focus-visible, button:focus-visible, input:focus-visible { outline: 3px solid #5B93F0; outline-offset: 2px; }
+  .top { display: flex; align-items: center; gap: 14px; height: 56px; padding: 0 24px; background: var(--card); border-bottom: 1px solid var(--line); }
+  .top .name { font-weight: 600; font-size: 16px; }
+  .top .sep { width: 1px; height: 22px; background: var(--line); }
+  .chip { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line); border-radius: 6px; padding: 5px 10px; font-size: 14px; background: var(--card); color: var(--ink); font-family: inherit; cursor: pointer; }
+  .meta { color: var(--muted); font-size: 14px; }
+  .demo { font-size: 13px; font-weight: 600; color: var(--warn); background: #FBEFE9; border-radius: 4px; padding: 3px 8px; }
+  .search { margin-left: auto; display: flex; align-items: center; gap: 8px; border: 1px solid var(--line); border-radius: 6px; padding: 6px 10px; width: 280px; color: var(--muted); }
+  .search input { border: 0; outline: 0; font: inherit; width: 100%; background: transparent; }
+  .grid { display: grid; grid-template-columns: 250px 1fr 300px; gap: 16px; padding: 16px 24px 24px; }
+  .col { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+  .panel { background: var(--card); border: 1px solid var(--line); border-radius: 10px; }
+  h1 { font-size: 22px; font-weight: 600; margin: 0; }
+  .ptitle { font-size: 15px; font-weight: 600; margin: 0; }
+  .kpi { display: block; width: 100%; text-align: left; font: inherit; color: inherit; background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; cursor: pointer; position: relative; }
+  .kpi:hover { border-color: #B9C6DA; }
+  .kpi .lab { font-size: 14px; color: var(--muted); }
+  .kpi .row { display: flex; align-items: baseline; gap: 10px; margin-top: 2px; }
+  .kpi .val { font-size: 28px; font-weight: 600; letter-spacing: -0.01em; }
+  .kpi .dyn { font-size: 14px; color: var(--muted); } .bad { color: var(--warn); } .good { color: var(--green); }
+  .kpi .bar { height: 4px; background: #ECEEF1; border-radius: 2px; margin-top: 8px; overflow: hidden; } .kpi .bar i { display: block; height: 100%; background: #9DB4D6; }
+  .kpi.sel { border-color: var(--accent); box-shadow: inset 3px 0 0 var(--accent); }
+  .maphead { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+  .tabs { display: flex; gap: 2px; margin-left: auto; }
+  .tabs button { font: 500 14px var(--sans); background: none; border: 0; padding: 6px 10px; border-radius: 6px; color: var(--muted); cursor: pointer; }
+  .tabs button[aria-pressed=true] { background: var(--accent-soft); color: var(--accent); }
+  .mapwrap { position: relative; }
+  #mapB { width: 100%; height: 520px; display: block; }
+  .zoom { position: absolute; left: 12px; top: 12px; display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: 6px; background: var(--card); overflow: hidden; }
+  .zoom button { width: 32px; height: 32px; border: 0; background: var(--card); font: 500 17px var(--sans); cursor: pointer; color: var(--ink); } .zoom button + button { border-top: 1px solid var(--line); }
+  .legend { padding: 10px 14px 12px; border-top: 1px solid var(--line); }
+  .lg-title { font-size: 14px; color: var(--muted); margin-bottom: 6px; } .lg-note { font-size: 13px; }
+  .lg-row { display: flex; flex-wrap: wrap; gap: 0; } .lg-cell { display: flex; flex-direction: column; gap: 3px; font-size: 13px; min-width: 88px; }
+  .lg-sw { height: 10px; display: block; } .lg-cell:first-child .lg-sw { border-radius: 2px 0 0 2px; }
+  .lg-cell:last-child { margin-left: 14px; } .lg-cell:last-child .lg-sw { border-radius: 2px; }
+  .lg-nd { background: repeating-linear-gradient(45deg, #C9CCD2 0 3px, #9AA1AB 3px 5px); }
+  .tip { position: absolute; pointer-events: none; background: var(--menu); color: #fff; border-radius: 8px; padding: 10px 12px; font-size: 14px; width: 250px; z-index: 5; }
+  .tip dl { display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; margin: 6px 0; } .tip dt { color: var(--menu-muted); } .tip dd { margin: 0; text-align: right; }
+  .tip-cls { color: var(--menu-muted); font-size: 13px; }
+  .rank { list-style: none; margin: 0; padding: 4px 0; }
+  .rank li { display: grid; grid-template-columns: 1fr auto; gap: 2px 8px; padding: 9px 14px; border-top: 1px solid var(--line); cursor: pointer; }
+  .rank li:first-child { border-top: 0; } .rank li:hover { background: #F7F8F6; }
+  .rank .r { font-weight: 500; } .rank .v { font-weight: 600; } .rank .why { grid-column: 1 / -1; font-size: 13px; color: var(--muted); }
+  .rank .lvl { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; vertical-align: 1px; }
+  .note { color: var(--muted); font-size: 13px; padding: 0 2px; }
+  @media (max-width: 1280px) { .grid { grid-template-columns: 230px 1fr; } .grid > .col:last-child { grid-column: 1 / -1; } }
+  @media (max-width: 760px) { .app { grid-template-columns: 1fr; } aside { display: none; } .grid { grid-template-columns: 1fr; padding: 12px 16px; } .search, .top .sep, .top .meta { display: none; } #mapB { height: 300px; } .tabs { margin-left: 0; overflow-x: auto; max-width: 100%; } }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside aria-label="Разделы">
+    <div class="mark" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z"/></svg></div>
+    <a href="#" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/></svg>Обзор</a>
+    <a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2z"/><path d="M9 4v14M15 6v14"/></svg>Карта</a>
+    <a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="10" r="3"/><path d="M12 21s-7-6-7-11a7 7 0 0114 0c0 5-7 11-7 11z"/></svg>Регионы</a>
+    <a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16v16H4z"/><path d="M8 9h8M8 13h8M8 17h5"/></svg>Обращения</a>
+    <a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2h9l5 5v15H6z"/><path d="M14 2v6h6"/></svg>Отчеты</a>
+  </aside>
+  <div>
+    <header class="top">
+      <span class="name">ФГИС УПЧ: аналитика обращений</span>
+      <span class="sep"></span>
+      <button class="chip">Январь - 20 октября 2026 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+      <span class="meta">Обновлено 20.10.2026, 06:00</span>
+      <span class="demo">Демо-данные</span>
+      <label class="search"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input placeholder="Регион или номер обращения" aria-label="Поиск по региону или номеру обращения"></label>
+    </header>
+    <div class="grid">
+      <div class="col" aria-label="Ключевые показатели">
+        <h1>Россия</h1>
+        <button class="kpi"><div class="lab">Всего обращений</div><div class="row"><span class="val">38 866</span><span class="dyn">+2,9%</span></div></button>
+        <button class="kpi sel"><div class="lab">Просрочено</div><div class="row"><span class="val">4,7%</span><span class="dyn bad">+0,4 п.п.</span></div><div class="dyn">1 845 обращений</div></button>
+        <button class="kpi"><div class="lab">Права восстановлены</div><div class="row"><span class="val">16,5%</span><span class="dyn good">+0,5 п.п.</span></div></button>
+        <button class="kpi"><div class="lab">Повторные</div><div class="row"><span class="val">12,8%</span><span class="dyn">-0,3 п.п.</span></div></button>
+        <button class="kpi"><div class="lab">Охват системой</div><div class="row"><span class="val">85 / 89</span><span class="dyn">субъектов</span></div><div class="bar"><i style="width:95.5%"></i></div></button>
+      </div>
+      <section class="col">
+        <div class="panel">
+          <div class="maphead">
+            <h2 class="ptitle">Субъекты РФ</h2>
+            <div class="tabs" role="group" aria-label="Показатель на карте">
+              <button data-mode="count" aria-pressed="false">Количество</button>
+              <button data-mode="overdue" aria-pressed="true">Просроченные</button>
+              <button data-mode="repeat" aria-pressed="false">Повторные</button>
+              <button data-mode="restored" aria-pressed="false">Права восстановлены</button>
+            </div>
+          </div>
+          <div class="mapwrap">
+            <svg id="mapB" role="img" aria-label="Карта субъектов Российской Федерации"></svg>
+            <div class="zoom"><button data-z="in" aria-label="Приблизить">+</button><button data-z="out" aria-label="Отдалить">−</button></div>
+            <div class="tip" id="tipB" hidden></div>
+          </div>
+          <div class="legend" id="lgB"></div>
+        </div>
+        <p class="note">Значения демонстрационные, не являются официальной статистикой.</p>
+      </section>
+      <div class="col">
+        <div class="panel">
+          <div class="maphead"><h2 class="ptitle">Требуют внимания</h2><span class="meta" style="margin-left:auto">7 регионов</span></div>
+          <ul class="rank">
+            <li><span class="r"><span class="lvl" style="background:var(--warn)"></span>Иркутская обл.</span><span class="v">9,1%</span><span class="why">Просрочено, вдвое выше среднего по России</span></li>
+            <li><span class="r"><span class="lvl" style="background:var(--warn)"></span>Республика Дагестан</span><span class="v">8,4%</span><span class="why">Просрочено, рост 2,1 п.п. за год</span></li>
+            <li><span class="r"><span class="lvl" style="background:#B7862B"></span>Красноярский край</span><span class="v">19,6%</span><span class="why">Повторные обращения, выше среднего</span></li>
+            <li><span class="r"><span class="lvl" style="background:#B7862B"></span>Чукотский АО</span><span class="v">9,2%</span><span class="why">Права восстановлены, ниже среднего</span></li>
+            <li><span class="r"><span class="lvl" style="background:#B7862B"></span>Саратовская обл.</span><span class="v">7,7%</span><span class="why">Просрочено, выше среднего</span></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+  UPCHMap({ svgEl: document.getElementById('mapB'), legendEl: document.getElementById('lgB'), tipEl: document.getElementById('tipB'),
+    scale: ['#E8F0FB', '#B8CFF0', '#7AA5E0', '#3D73C4', '#163E7A'], hoverStroke: '#0A57C9' }).then(m => {
+    document.querySelectorAll('[data-mode]').forEach(b => b.onclick = () => {
+      document.querySelectorAll('[data-mode]').forEach(x => x.setAttribute('aria-pressed', x === b)); m.setMode(b.dataset.mode); });
+    document.querySelectorAll('[data-z]').forEach(b => b.onclick = () => m.zoomBy(b.dataset.z === 'in' ? 1.6 : 1 / 1.6));
+  });
+</script>
+</body>
+</html>
