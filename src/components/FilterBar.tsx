@@ -13,7 +13,8 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   )
 }
 
-export function FilterBar({ showRegion = true }: { showRegion?: boolean }) {
+/** regionMode: navigate открывает страницу региона, filter задает фильтр region в адресе (раздел «Обращения») */
+export function FilterBar({ showRegion = true, regionMode = 'navigate', children }: { showRegion?: boolean; regionMode?: 'navigate' | 'filter'; children?: React.ReactNode }) {
   const { data } = useData()
   const { period, cat, fd, set, reset, params } = useFilters()
   const navigate = useNavigate()
@@ -34,6 +35,8 @@ export function FilterBar({ showRegion = true }: { showRegion?: boolean }) {
   if (serializePeriod(period) !== 'y2026') chips.push({ label: periodLabel(data, period), clear: () => set({ p: null }) })
   if (cat) chips.push({ label: data.meta.categories.find(c => c.id === cat)?.name ?? cat, clear: () => set({ cat: null }) })
   if (fd) chips.push({ label: `${data.meta.districts[fd]} ФО`, clear: () => set({ fd: null }) })
+  const regionParam = regionMode === 'filter' ? params.get('region') : null
+  if (regionParam) chips.push({ label: data.regions.find(r => r.code === regionParam)?.name ?? regionParam, clear: () => set({ region: null }) })
 
   const monthOptions = data.meta.months.filter(m => m.startsWith(String(year)))
 
@@ -104,14 +107,18 @@ export function FilterBar({ showRegion = true }: { showRegion?: boolean }) {
         </Field>
         {showRegion && (
           <Field label="Регион">
-            <select className="select" value="" onChange={e => e.target.value && navigate(`/region/${e.target.value}${carry(params)}`)}>
-              <option value="">Открыть регион…</option>
+            <select className="select" value={regionMode === 'filter' ? params.get('region') ?? '' : ''} onChange={e => {
+              if (regionMode === 'filter') set({ region: e.target.value || null, page: null })
+              else if (e.target.value) navigate(`/region/${e.target.value}${carry(params)}`)
+            }}>
+              <option value="">{regionMode === 'filter' ? 'Все регионы' : 'Открыть регион…'}</option>
               {[...data.regions].sort((a, b) => a.name.localeCompare(b.name, 'ru')).map(r => (
                 <option key={r.code} value={r.code}>{r.name}{r.connected ? '' : ' (нет данных)'}</option>
               ))}
             </select>
           </Field>
         )}
+        {children}
       </div>
       {chips.length > 0 && (
         <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-line pt-3">

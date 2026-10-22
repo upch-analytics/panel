@@ -14,6 +14,8 @@ export interface Region {
   connected: boolean
   executors: number
   groups: { elderly: number; disabled: number; remote: number; large: number }
+  /** муниципальные образования, первым административный центр */
+  munis: string[]
 }
 
 export interface DemoData {

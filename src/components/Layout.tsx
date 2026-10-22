@@ -1,8 +1,9 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { NavLink, useLocation, useSearchParams } from 'react-router-dom'
-import { BarChart3, FileText, Inbox, MapPin, Map as MapIcon, Menu, Search, ShieldCheck, X, RotateCw } from 'lucide-react'
+import { BarChart3, FileText, Inbox, MapPin, Map as MapIcon, Menu, ShieldCheck, X, RotateCw } from 'lucide-react'
 import { useDataState } from '../data/load'
 import { parsePeriod, periodLabel } from '../data/period'
+import { GlobalSearch } from './GlobalSearch'
 
 const NAV = [
   { to: '/', label: 'Обзор по России', icon: BarChart3, end: true },
@@ -63,10 +64,7 @@ function Topbar({ onMenu }: { onMenu: () => void }) {
       <span className="rounded-full border border-bad/25 bg-bad-soft px-2.5 py-0.5 text-xs font-semibold text-bad">
         Демонстрационный режим
       </span>
-      <label className="ml-auto hidden w-80 items-center gap-2 rounded-md border border-line bg-surface px-3 py-1.5 text-muted focus-within:border-accent md:flex">
-        <Search size={16} aria-hidden="true" />
-        <input className="w-full bg-transparent text-ink outline-none placeholder:text-muted" placeholder="Регион или номер обращения" aria-label="Поиск по региону или номеру обращения" />
-      </label>
+      <GlobalSearch />
     </header>
   )
 }
@@ -116,7 +114,7 @@ export function Layout({ children }: { children: ReactNode }) {
         <main>
           <DataGate>{children}</DataGate>
         </main>
-        <footer className="mt-10 border-t border-line pt-4 text-sm text-muted">
+        <footer className="no-print mt-10 border-t border-line pt-4 text-sm text-muted">
           Все значения демонстрационные и не являются официальной статистикой. Контуры субъектов: © участники OpenStreetMap, ODbL.
         </footer>
       </div>

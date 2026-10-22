@@ -126,5 +126,8 @@
 
 @media print {
   .no-print { display: none !important; }
-  html, body { background: #fff; }
+  html, body { background: #fff; font-size: 12pt; }
+  @page { margin: 16mm; }
+  table { page-break-inside: auto; }
+  tr { page-break-inside: avoid; }
 }

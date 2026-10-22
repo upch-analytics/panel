@@ -29,7 +29,8 @@ lucide-react для иконок. Шрифты Golos Text и Source Serif 4 по
   фильтры в адресе страницы (`filters.ts`), правила внимания и рекомендаций (`rules.ts`).
 - `src/components/`: `Layout`, `FilterBar`, `KpiBand`, `RussiaMap`, `Charts`, `AttentionList`.
 - `src/components/Layout.tsx`: боковое меню, верхняя панель, обработка ошибки загрузки.
-- `src/pages/`: страницы разделов (`Overview.tsx`: главная и «Карта регионов»; `Placeholder.tsx`: разделы этапа 4).
+- `src/pages/`: `Overview.tsx` (главная и «Карта регионов»), `RegionPage.tsx`, `RegionsList.tsx`,
+  `Appeals.tsx` (список и карточка), `Reports.tsx`, `Common.tsx` (заголовок, «не найдено»).
 - `design/directions/`: наброски этапа 1 (не входят в сборку).
 - `DESIGN.md`: дизайн-система «Атлас», токены и правила.
 

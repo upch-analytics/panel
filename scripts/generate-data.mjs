@@ -10,8 +10,12 @@
 //   rest права восстановлены (подмножество viol)
 //   rep  повторные (по ранее заявленной проблеме)
 // Национальные и окружные значения в интерфейсе получаются суммированием ячеек.
-import { writeFileSync, mkdirSync } from 'node:fs';
+import { writeFileSync, mkdirSync, readFileSync } from 'node:fs';
 import { REGIONS, DISTRICTS } from './regions-ref.mjs';
+
+// Муниципальные образования (OpenStreetMap, admin_level 6; для 4 новых субъектов список задан вручную).
+// Первым идет административный центр.
+const MUNIS = JSON.parse(readFileSync(new URL('./municipalities.json', import.meta.url), 'utf8'));
 
 const SEED = 'upch-2026';
 const TODAY = '2026-10-20';
@@ -86,7 +90,7 @@ const regions = REGIONS.map(ref => {
   const rate = (4.2 * Math.exp((r() - 0.5) * 0.9)) * (p.rate || 1);
   // У регионов с профилем отклонение задано профилем, у остальных небольшой случайный разброс
   const jitter = (w) => (Object.keys(p).length ? 1 + (r() - 0.5) * 0.08 : Math.exp((r() - 0.5) * w));
-  const overBase = 0.036 * jitter(0.3) * (p.over || 1);
+  const overBase = 0.04 * jitter(0.3) * (p.over || 1);
   const repBase = 0.105 * jitter(0.24) * (p.rep || 1);
   const violBase = 0.36 + (r() - 0.5) * 0.12;
   const restBase = 0.5 * jitter(0.2) * (p.rest || 1);
@@ -121,7 +125,8 @@ for (const R of regions) {
       if (c.id === 'social' && R.p.socialGrowth && y === 2026) catMul = R.p.socialGrowth;
       const rec = draw(r, monthly * R.catShare[ci] * catMul * (0.85 + r() * 0.3));
       const yearOver = y === 2026 ? 1.08 : y === 2025 ? 1.0 : 0.95;
-      const over = part(r, rec, R.overBase * CAT_OVER[c.id] * yearOver * (age === 0 ? 0.6 : 1));
+      // Срок 30 дней: в текущем месяце просрочек еще нет, в прошлом только у поступивших до 20 числа
+      const over = part(r, rec, R.overBase * CAT_OVER[c.id] * yearOver * (age === 0 ? 0 : age === 1 ? 0.65 : 1));
       const done = part(r, rec, doneShare);
       const viol = part(r, done, R.violBase);
       const yearRest = y === 2026 ? 1.03 : 1.0;
@@ -155,7 +160,7 @@ const out = {
   },
   regions: regions.map(R => ({
     code: R.ref.code, iso: R.ref.iso, name: R.ref.name, short: R.ref.short, district: R.ref.district, pop: R.ref.pop,
-    connected: R.connected, executors: R.executors,
+    connected: R.connected, executors: R.executors, munis: MUNIS[R.ref.code] ?? [],
     groups: Object.fromEntries(Object.entries(R.groups).map(([k, v]) => [k, Math.round(v * 1000) / 1000])),
   })),
   cube,

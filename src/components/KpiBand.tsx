@@ -4,7 +4,7 @@ import { change, num, pct, pp, rates, signedPct, type Totals } from '../data/agg
 
 // Полоса ключевых показателей: ячейки в одной панели с разделителями (DESIGN.md, «Полоса показателей»)
 
-type Tone = 'good' | 'bad' | 'neutral'
+export type Tone = 'good' | 'bad' | 'neutral'
 const toneCls: Record<Tone, string> = { good: 'text-good', bad: 'text-bad', neutral: 'text-muted' }
 
 export interface KpiCell {
@@ -15,6 +15,8 @@ export interface KpiCell {
   tone?: Tone
   to: string
   hint?: string
+  /** сравнение с общероссийским значением (страница региона) */
+  compare?: { text: string; tone: Tone }
 }
 
 const COLS = { 4: 'xl:grid-cols-4', 5: 'xl:grid-cols-5' } as const
@@ -29,6 +31,11 @@ export function KpiBand({ cells, label = 'Ключевые показатели'
           <span className="num mt-1.5 font-serif text-3xl font-semibold">{c.value}</span>
           {c.sub && <span className="mt-1 text-sm text-ink-2">{c.sub}</span>}
           {c.delta && <span className={`mt-0.5 text-sm ${toneCls[c.tone ?? 'neutral']}`}>{c.delta}</span>}
+          {c.compare && (
+            <span className={`mt-2 inline-flex w-fit items-center gap-1.5 rounded-sm px-2 py-0.5 text-sm font-medium ${c.compare.tone === 'bad' ? 'bg-bad-soft text-bad' : c.compare.tone === 'good' ? 'bg-good-soft text-good' : 'bg-bg text-muted'}`}>
+              {c.compare.text}
+            </span>
+          )}
           <span className="mt-auto pt-2 text-sm text-accent opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">Открыть обращения</span>
         </Link>
       ))}

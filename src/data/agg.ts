@@ -6,18 +6,28 @@ import type { DemoData, MetricKey } from './types'
 export const METRICS: MetricKey[] = ['rec', 'over', 'done', 'viol', 'rest', 'rep']
 const NM = METRICS.length
 
-export type Totals = Record<MetricKey, number>
-export const zero = (): Totals => ({ rec: 0, over: 0, done: 0, viol: 0, rest: 0, rep: 0 })
+/**
+ * due: поступившие, у которых срок ответа (30 дней) уже наступил; overDue: просроченные среди них.
+ * Доля просроченных считается по ним, иначе свежие месяцы занижают долю и искажают сравнение с прошлым годом.
+ */
+export type Totals = Record<MetricKey | 'due' | 'overDue', number>
+export const zero = (): Totals => ({ rec: 0, over: 0, done: 0, viol: 0, rest: 0, rep: 0, due: 0, overDue: 0 })
+
+/** Доля обращений месяца с наступившим сроком: текущий месяц 0, прошлый 0,65 (поступившие до 20 числа) */
+function dueFactor(data: DemoData, m: number) {
+  const age = data.meta.months.length - 1 - m
+  return age <= 0 ? 0 : age === 1 ? 0.65 : 1
+}
 
 export interface Rates {
-  overShare: number   // просрочено / поступило
+  overShare: number   // просрочено / поступило, среди обращений с наступившим сроком ответа
   repShare: number    // повторные / поступило
   restShare: number   // права восстановлены / завершено с установленным нарушением
   inWork: number      // поступило - рассмотрено
 }
 export function rates(t: Totals): Rates {
   return {
-    overShare: t.rec ? t.over / t.rec : NaN,
+    overShare: t.due ? t.overDue / t.due : NaN,
     repShare: t.rec ? t.rep / t.rec : NaN,
     restShare: t.viol ? t.rest / t.viol : NaN,
     inWork: t.rec - t.done,
@@ -33,6 +43,8 @@ export interface Filter {
   cats?: string[]           // id категорий; по умолчанию все
   /** доля, с которой берется последний месяц диапазона (для сравнения неполного месяца) */
   lastFrac?: number
+  /** сдвиг в месяцах для прошлогоднего периода: зрелость сроков берется как у текущего */
+  shift?: number
 }
 
 export function sumCube(data: DemoData, f: Filter): Totals {
@@ -45,10 +57,14 @@ export function sumCube(data: DemoData, f: Filter): Totals {
     if (!arr) continue
     for (let m = f.range.from; m <= f.range.to; m++) {
       const frac = m === f.range.to && f.lastFrac != null ? f.lastFrac : 1
+      const due = dueFactor(data, m + (f.shift ?? 0))
       for (let c = 0; c < nc; c++) {
         if (catIdx && !catIdx.includes(c)) continue
         const base = (m * nc + c) * NM
         for (let k = 0; k < NM; k++) out[METRICS[k]] += arr[base + k] * frac
+        out.due += arr[base] * frac * due
+        // В текущем периоде просрочки свежих месяцев уже ограничены сроком; в прошлогоднем ограничиваем так же
+        out.overDue += arr[base + 1] * frac * (f.shift ? due : 1)
       }
     }
   }
@@ -62,7 +78,7 @@ export function previousYear(data: DemoData, f: Filter): Filter | null {
   if (from < 0) return null
   const partialIdx = data.meta.months.indexOf(data.meta.partialMonth)
   const lastFrac = f.range.to === partialIdx ? data.meta.partialFraction : undefined
-  return { ...f, range: { from, to }, lastFrac }
+  return { ...f, range: { from, to }, lastFrac, shift: 12 }
 }
 
 export function byRegion(data: DemoData, f: Omit<Filter, 'codes'>): Map<string, Totals> {

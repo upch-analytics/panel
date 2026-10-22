@@ -27,6 +27,8 @@ export function useFilters() {
   const set = useCallback((patch: Record<string, string | null>) => {
     setParams(prev => {
       const next = new URLSearchParams(prev)
+      // Любой фильтр, кроме самой страницы, возвращает список на первую страницу
+      if (!('page' in patch)) next.delete('page')
       for (const [k, v] of Object.entries(patch)) {
         if (v == null || (k === 'p' && v === DEFAULT_PERIOD)) next.delete(k)
         else next.set(k, v)
@@ -35,7 +37,7 @@ export function useFilters() {
     }, { replace: true })
   }, [setParams])
 
-  const reset = useCallback(() => set({ p: null, cat: null, fd: null, status: null }), [set])
+  const reset = useCallback(() => set({ p: null, cat: null, fd: null, status: null, region: null, q: null, page: null }), [set])
 
   const range = useMemo(() => periodRange(data, period), [data, period])
   const codes = useMemo(() => (fd ? data.regions.filter(r => r.district === fd && r.connected).map(r => r.code) : undefined), [data, fd])
