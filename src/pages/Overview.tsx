@@ -86,7 +86,7 @@ export function Overview() {
 
   return (
     <>
-      <PageTitle sub={`${periodLabel(data, f.period)}${cmp ? `, сравнение ${cmp}` : ''}`}>{`Обращения граждан: ${scope}`}</PageTitle>
+      <PageTitle hero eyebrow={`Обзор, ${periodLabel(data, f.period)}`} sub={`Обращения к Уполномоченным по правам человека: где нарушаются права, как это меняется и что уже сделано${cmp ? `. Сравнение ${cmp}` : ''}`}>{scope === 'Россия' ? 'Обращения граждан по России' : `Обращения граждан: ${scope}`}</PageTitle>
       <div className="flex flex-col gap-5">
         <FilterBar />
         <RussiaMap
@@ -106,13 +106,13 @@ export function Overview() {
         />
         <KpiBand cells={cells} />
         <div className="grid gap-5 xl:grid-cols-[3fr_2fr]">
-          <section aria-labelledby="dyn-title" className="min-w-0 rounded-lg border border-line bg-surface px-5 pt-4 pb-5">
-            <h2 id="dyn-title" className="font-serif text-2xl font-semibold">Поступление обращений по месяцам</h2>
+          <section aria-labelledby="dyn-title" className="min-w-0 card px-5 pt-4 pb-5">
+            <h2 id="dyn-title" className="text-lg font-bold tracking-[-0.01em]">Поступление обращений по месяцам</h2>
             <p className="mt-1 mb-3 text-sm text-muted">{scope}, {num(model.cur.rec)} обращений за период</p>
             <MonthlyChart points={charts.points} partialMonth={data.meta.partialMonth} partialDay={Number(data.meta.today.slice(8))} curYear={charts.years} />
           </section>
-          <section aria-labelledby="cat-title" className="min-w-0 rounded-lg border border-line bg-surface px-3 pt-4 pb-4">
-            <h2 id="cat-title" className="px-2 font-serif text-2xl font-semibold">Категории прав</h2>
+          <section aria-labelledby="cat-title" className="min-w-0 card px-3 pt-4 pb-4">
+            <h2 id="cat-title" className="px-2 text-lg font-bold tracking-[-0.01em]">Категории прав</h2>
             <p className="mt-1 mb-2 px-2 text-sm text-muted">Количество, доля и изменение {cmp || 'к прошлому периоду'}. Нажмите, чтобы открыть обращения</p>
             <CategoryBars rows={charts.cats} selected={f.cat} link={id => `/appeals${carry(f.params, { cat: id })}`} />
           </section>
@@ -153,8 +153,8 @@ export function MapPage() {
             <RussiaMap geo={geo} regions={data.regions} values={model.values} mode={f.mode} onMode={x => f.set({ map: x })}
               onOpen={code => navigate(`/region/${code}${carry(f.params)}`)} focus={f.codes} highlight={hover}
               aside={<RankList regions={f.fd ? data.regions.filter(r => r.district === f.fd) : data.regions} values={model.values} mode={f.mode} onHover={setHover} link={code => `/region/${code}${carry(f.params)}`} />} />
-            <section aria-labelledby="fd-title" className="rounded-lg border border-line bg-surface p-5">
-              <h2 id="fd-title" className="font-serif text-2xl font-semibold">Федеральные округа</h2>
+            <section aria-labelledby="fd-title" className="card p-5">
+              <h2 id="fd-title" className="text-lg font-bold tracking-[-0.01em]">Федеральные округа</h2>
               <p className="mt-1 text-sm text-muted">{m.title}, за период. По России: {m.fmt(national)}</p>
               <div className="mt-3 overflow-x-auto">
                 <table className="w-full min-w-[560px] text-sm">

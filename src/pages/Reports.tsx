@@ -107,7 +107,7 @@ export function Reports() {
             </label>
           </FilterBar>
         </div>
-        <fieldset className="no-print rounded-lg border border-line bg-surface p-4">
+        <fieldset className="no-print card p-4">
           <legend className="px-1 text-sm text-muted">Показатели в отчете</legend>
           <div className="flex flex-wrap gap-x-5 gap-y-2">
             {INDICATORS.map(i => (
@@ -120,11 +120,11 @@ export function Reports() {
         </fieldset>
 
         {report && (
-          <article aria-labelledby="rep-title" className="rounded-lg border border-line bg-surface p-6 print:border-0 print:p-0">
+          <article aria-labelledby="rep-title" className="card p-6 print:border-0 print:p-0">
             <header className="flex flex-wrap items-start gap-4 border-b border-line pb-4">
               <div className="mr-auto">
                 <p className="text-sm text-muted">Отчет по обращениям граждан, ФГИС УПЧ</p>
-                <h2 id="rep-title" className="font-serif text-3xl font-semibold">{report.title}</h2>
+                <h2 id="rep-title" className="font-display text-3xl font-medium tracking-[-0.03em]">{report.title}</h2>
                 <p className="mt-1 text-ink-2">{period}{catName ? `, ${catName.toLowerCase()}` : ''}. Сравнение {compareLabel(data, f.period) || 'не проводится'}</p>
                 <p className="mt-1 text-sm text-muted">Дата формирования: {created}</p>
               </div>

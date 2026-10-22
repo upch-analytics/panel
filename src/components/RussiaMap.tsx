@@ -142,10 +142,10 @@ export function RussiaMap({ geo, regions, values, mode, onMode, onOpen, focus, h
   }
 
   return (
-    <section aria-labelledby="map-title" className="rounded-lg border border-line bg-surface">
+    <section aria-labelledby="map-title" className="card">
       <div className="flex flex-wrap items-center gap-3 px-5 pt-4 pb-3">
-        <h2 id="map-title" className="font-serif text-2xl font-semibold">Карта субъектов РФ</h2>
-        <div role="group" aria-label="Показатель на карте" className="flex flex-wrap rounded-md border border-line bg-bg p-0.5 md:ml-auto">
+        <h2 id="map-title" className="text-lg font-bold tracking-[-0.01em]">Карта субъектов РФ</h2>
+        <div role="group" aria-label="Показатель на карте" className="flex flex-wrap gap-0.5 rounded-[20px] border border-line bg-bg p-1 md:ml-auto">
           {MAP_MODES.map(x => (
             <button key={x.id} type="button" aria-pressed={mode === x.id} onClick={() => { setHoverClass(null); onMode(x.id) }}
               className={`rounded-sm px-3 py-1.5 text-sm font-medium transition-colors ${mode === x.id ? 'bg-accent-soft text-accent shadow-[inset_0_0_0_1px_var(--color-accent)]' : 'text-muted hover:bg-surface hover:text-ink'}`}>

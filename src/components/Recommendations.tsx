@@ -13,7 +13,7 @@ export function Recommendations({ items, link, label }: { items: Recommendation[
   return (
     <section aria-labelledby="rec-title" className="rounded-lg border border-line-strong bg-surface">
       <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-line px-5 pt-4 pb-3">
-        <h2 id="rec-title" className="font-serif text-2xl font-semibold">Приоритетные проблемы и рекомендации</h2>
+        <h2 id="rec-title" className="text-lg font-bold tracking-[-0.01em]">Приоритетные проблемы и рекомендации</h2>
         <span className="text-sm text-muted">
           {high ? `${high} ${plural(high, 'проблема', 'проблемы', 'проблем')} с высоким уровнем внимания. ` : ''}Сформировано по правилам из показателей за период
         </span>

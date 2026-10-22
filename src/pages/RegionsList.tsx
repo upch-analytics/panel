@@ -54,7 +54,7 @@ export function RegionsList() {
       <PageTitle sub={`${periodLabel(data, f.period)}. Выберите субъект, чтобы открыть подробную аналитику`}>Региональная аналитика</PageTitle>
       <div className="flex flex-col gap-5">
         <FilterBar showRegion={false} />
-        <section aria-label="Субъекты" className="rounded-lg border border-line bg-surface">
+        <section aria-label="Субъекты" className="card">
           <div className="flex flex-wrap items-center gap-3 px-5 py-3">
             <label className="flex w-72 max-w-full items-center gap-2 rounded-sm border border-line-strong px-2.5 focus-within:border-accent">
               <Search size={16} className="text-muted" aria-hidden="true" />

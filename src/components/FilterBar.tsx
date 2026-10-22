@@ -46,7 +46,7 @@ export function FilterBar({ showRegion = true, showDistrict = true, regionMode =
   const monthOptions = data.meta.months.filter(m => m.startsWith(String(year)))
 
   return (
-    <section aria-label="Фильтры" className="no-print rounded-lg border border-line bg-surface px-4 py-3">
+    <section aria-label="Фильтры" className="no-print card px-4 py-3">
       <div className="flex flex-wrap items-end gap-x-4 gap-y-3 xl:items-center">
         <Field label="Период">
           <select className="select" value={period.kind} onChange={e => onKind(e.target.value as Period['kind'])}>

@@ -103,7 +103,7 @@ export function Appeals() {
           </label>
         </FilterBar>
 
-        <section aria-label="Реестр обращений" className="rounded-lg border border-line bg-surface">
+        <section aria-label="Реестр обращений" className="card">
           <div role="tablist" aria-label="Папки" className="flex gap-1 overflow-x-auto border-b border-line px-3 pt-2">
             {FOLDERS.map(x => (
               <button key={x.id} role="tab" type="button" aria-selected={folder.id === x.id} onClick={() => f.set({ folder: x.id === 'all' ? null : x.id })}
@@ -221,14 +221,14 @@ export function AppealCard() {
         <Link to={`/region/${a.code}${carry(f.params)}`} className="text-accent underline underline-offset-4">{region.name}</Link>
       </nav>
       <div className="mt-4 mb-6 flex flex-wrap items-center gap-3">
-        <h1 className="num font-serif text-4xl font-semibold tracking-tight">Обращение № {a.id}</h1>
+        <h1 className="num font-display text-4xl font-medium tracking-[-0.03em]">Обращение № {a.id}</h1>
         <StatusBadge s={a.status} />
         {a.repeat && <span className="rounded-full bg-mid-soft px-2 py-0.5 text-xs font-semibold text-mid">Повторное</span>}
       </div>
 
       <div className="grid gap-5 xl:grid-cols-[3fr_2fr]">
         <div className="flex flex-col gap-5">
-          <section aria-labelledby="sum-title" className="rounded-lg border border-line bg-surface p-5">
+          <section aria-labelledby="sum-title" className="card p-5">
             <h2 id="sum-title" className="text-xl font-semibold">{a.topic}</h2>
             <p className="mt-2 max-w-[70ch] text-lg">{summary(a)}</p>
             <p className="mt-3 text-sm text-muted">Заявитель: {a.applicant} (обезличенный номер, персональные данные не отображаются)</p>
@@ -247,7 +247,7 @@ export function AppealCard() {
             </section>
           )}
 
-          <section aria-labelledby="tl-title" className="rounded-lg border border-line bg-surface p-5">
+          <section aria-labelledby="tl-title" className="card p-5">
             <h2 id="tl-title" className="text-xl font-semibold">История рассмотрения</h2>
             <ol className="mt-3 border-l-2 border-line pl-5">
               {tl.map((e, i) => (
@@ -260,14 +260,14 @@ export function AppealCard() {
             </ol>
           </section>
 
-          <section aria-labelledby="res-title" className="rounded-lg border border-line bg-surface p-5">
+          <section aria-labelledby="res-title" className="card p-5">
             <h2 id="res-title" className="text-xl font-semibold">Результат рассмотрения</h2>
             <p className="mt-2">{result(a)}</p>
           </section>
         </div>
 
         <div className="flex flex-col gap-5">
-          <section aria-labelledby="att-title2" className="rounded-lg border border-line bg-surface p-5">
+          <section aria-labelledby="att-title2" className="card p-5">
             <h2 id="att-title2" className="text-xl font-semibold">Сведения</h2>
             <dl className="mt-3 grid grid-cols-[minmax(8rem,auto)_1fr] gap-x-4 gap-y-2 text-sm">
               <Row label="Номер"><span className="num">{a.id}</span></Row>
@@ -284,7 +284,7 @@ export function AppealCard() {
               {a.doneDate && <Row label="Рассмотрено">{ruDate(a.doneDate)}</Row>}
             </dl>
           </section>
-          <section aria-labelledby="doc-title" className="rounded-lg border border-line bg-surface p-5">
+          <section aria-labelledby="doc-title" className="card p-5">
             <h2 id="doc-title" className="text-xl font-semibold">Документы</h2>
             <ul className="mt-2 flex flex-col gap-1.5 text-sm">
               {documents(a).map(d => <li key={d} className="flex items-center gap-2"><FileText size={16} className="text-muted" aria-hidden="true" />{d}</li>)}
@@ -292,7 +292,7 @@ export function AppealCard() {
             <p className="mt-2 text-sm text-muted">Названия документов демонстрационные, файлы не прикреплены.</p>
           </section>
           {a.repeat && (
-            <section aria-labelledby="rel-title" className="rounded-lg border border-line bg-surface p-5">
+            <section aria-labelledby="rel-title" className="card p-5">
               <h2 id="rel-title" className="text-xl font-semibold">Связанные обращения</h2>
               {related.length ? (
                 <ul className="mt-2 flex flex-col gap-2 text-sm">

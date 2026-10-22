@@ -106,7 +106,7 @@ export function RegionPage() {
     return (
       <>
         {header}
-        <div className="rounded-lg border border-line bg-surface p-6">
+        <div className="card p-6">
           <h2 className="text-xl font-semibold">Нет данных</h2>
           <p className="mt-2 max-w-2xl text-muted">Уполномоченный по правам человека в субъекте пока не подключен к ФГИС УПЧ, поэтому обращения региона в системе не отображаются. Отсутствие данных не означает отсутствия проблем.</p>
         </div>
@@ -117,9 +117,9 @@ export function RegionPage() {
           const fdName = `${data.meta.districts[region.district]} федеральный округ`
           return (
             <div className="mt-5 grid gap-5 lg:grid-cols-[2fr_1fr]">
-              <section aria-labelledby="near-title" className="rounded-lg border border-line bg-surface">
+              <section aria-labelledby="near-title" className="card">
                 <div className="px-5 pt-4 pb-3">
-                  <h2 id="near-title" className="font-serif text-2xl font-semibold">Подключенные субъекты округа</h2>
+                  <h2 id="near-title" className="text-lg font-bold tracking-[-0.01em]">Подключенные субъекты округа</h2>
                   <p className="mt-1 text-sm text-muted">{fdName}: {numWord(near.length, 'субъект', 'субъекта', 'субъектов')} с данными в системе</p>
                 </div>
                 <ul className="grid border-t border-line sm:grid-cols-2">
@@ -137,8 +137,8 @@ export function RegionPage() {
                   <Link to={`/reports${carry(f.params, { t: `fd:${region.district}` })}`} className="font-medium text-accent underline underline-offset-4 hover:text-accent-hover">Отчет по округу</Link>
                 </div>
               </section>
-              <section aria-labelledby="off-title" className="rounded-lg border border-line bg-surface p-5">
-                <h2 id="off-title" className="font-serif text-2xl font-semibold">Также не подключены</h2>
+              <section aria-labelledby="off-title" className="card p-5">
+                <h2 id="off-title" className="text-lg font-bold tracking-[-0.01em]">Также не подключены</h2>
                 <ul className="mt-3 flex flex-col gap-2 text-sm">
                   {off.map(x => <li key={x.code}><Link to={`/region/${x.code}${carry(f.params)}`} className="text-accent underline-offset-4 hover:underline">{x.name}</Link></li>)}
                 </ul>
@@ -196,20 +196,20 @@ export function RegionPage() {
         />
 
         <div className="grid gap-5 xl:grid-cols-[2fr_3fr]">
-          <section aria-labelledby="rcat-title" className="min-w-0 rounded-lg border border-line bg-surface px-3 pt-4 pb-4">
-            <h2 id="rcat-title" className="px-2 font-serif text-2xl font-semibold">Категории прав</h2>
+          <section aria-labelledby="rcat-title" className="min-w-0 card px-3 pt-4 pb-4">
+            <h2 id="rcat-title" className="px-2 text-lg font-bold tracking-[-0.01em]">Категории прав</h2>
             <p className="mt-1 mb-2 px-2 text-sm text-muted">Количество, доля и изменение {cmp}. Выделен рост от 10%</p>
             <CategoryBars rows={model.catRows} selected={f.cat} link={id => link('all', { cat: id })} />
           </section>
-          <section aria-labelledby="rdyn-title" className="min-w-0 rounded-lg border border-line bg-surface px-5 pt-4 pb-5">
-            <h2 id="rdyn-title" className="font-serif text-2xl font-semibold">Поступление по месяцам</h2>
+          <section aria-labelledby="rdyn-title" className="min-w-0 card px-5 pt-4 pb-5">
+            <h2 id="rdyn-title" className="text-lg font-bold tracking-[-0.01em]">Поступление по месяцам</h2>
             <p className="mt-1 mb-3 text-sm text-muted">{num(model.cur.rec)} обращений за период</p>
             <MonthlyChart points={model.points} partialMonth={data.meta.partialMonth} partialDay={Number(data.meta.today.slice(8))} curYear={model.points[0]?.month.slice(0, 4) ?? ''} />
           </section>
         </div>
 
         <div className="grid gap-5 lg:grid-cols-3">
-          <section aria-labelledby="muni-title" className="min-w-0 rounded-lg border border-line bg-surface p-5 lg:col-span-2">
+          <section aria-labelledby="muni-title" className="min-w-0 card p-5 lg:col-span-2">
             <h2 id="muni-title" className="text-xl font-semibold">Территории с наибольшим приростом</h2>
             <p className="mt-1 text-sm text-muted">Прирост обращений {cmp} и доля обращений с нарушением срока</p>
             <div className="mt-3 overflow-x-auto">
@@ -232,15 +232,15 @@ export function RegionPage() {
             </div>
           </section>
           <div className="flex min-w-0 flex-col gap-5">
-            <section aria-labelledby="load-title" className="min-w-0 rounded-lg border border-line bg-surface p-5">
+            <section aria-labelledby="load-title" className="min-w-0 card p-5">
               <h2 id="load-title" className="text-xl font-semibold">Нагрузка на исполнителей</h2>
-              <p className="num mt-2 font-serif text-3xl font-semibold">{model.load.perExecutor.toFixed(1).replace('.', ',')}</p>
+              <p className="num mt-2 font-display text-2xl font-medium tracking-[-0.03em]">{model.load.perExecutor.toFixed(1).replace('.', ',')}</p>
               <p className="text-sm text-ink-2">незавершенных обращений на исполнителя ({num(model.load.open)} на {model.load.executors})</p>
               <p className={`mt-1 text-sm ${model.load.perExecutor > model.natLoad.perExecutor * 1.2 ? 'text-bad' : 'text-muted'}`}>
                 {model.load.perExecutor > model.natLoad.perExecutor * 1.2 ? 'Выше' : model.load.perExecutor < model.natLoad.perExecutor * 0.8 ? 'Ниже' : 'Около'} среднего по России: {model.natLoad.perExecutor.toFixed(1).replace('.', ',')}
               </p>
             </section>
-            <section aria-labelledby="grp-title" className="min-w-0 rounded-lg border border-line bg-surface p-5">
+            <section aria-labelledby="grp-title" className="min-w-0 card p-5">
               <h2 id="grp-title" className="text-xl font-semibold">Категории граждан</h2>
               <ul className="mt-2 flex flex-col gap-1.5 text-sm">
                 {model.groups.map(g => (
@@ -251,7 +251,7 @@ export function RegionPage() {
           </div>
         </div>
 
-        <section aria-labelledby="last-title" className="rounded-lg border border-line bg-surface">
+        <section aria-labelledby="last-title" className="card">
           <div className="flex flex-wrap items-baseline justify-between gap-2 px-5 pt-4 pb-3">
             <h2 id="last-title" className="text-xl font-semibold">Последние обращения региона</h2>
             <Link to={link('all')} className="text-sm font-medium text-accent underline underline-offset-4">Все обращения региона</Link>

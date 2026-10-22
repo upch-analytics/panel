@@ -30,7 +30,7 @@ export function KpiBand({ cells, label = 'Ключевые показатели'
         <Link key={c.label} to={c.to} title={c.hint} className="group relative flex flex-col bg-surface px-4 py-3.5 2xl:px-5 transition-colors hover:bg-surface-hover focus-visible:z-10">
           <ArrowUpRight size={16} className="absolute top-3.5 right-3.5 text-accent opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100" aria-hidden="true" />
           <span className="pr-5 text-sm text-muted">{c.label}</span>
-          <span className="num mt-1.5 font-serif text-3xl font-semibold">{c.value}</span>
+          <span className="num mt-1.5 font-display text-2xl font-medium tracking-[-0.03em]">{c.value}</span>
           {c.sub && <span className="mt-1 text-sm text-ink-2">{c.sub}</span>}
           {c.delta && <span className={`mt-0.5 text-sm ${toneCls[c.tone ?? 'neutral']}`}>{c.delta}</span>}
           {c.compare && (

@@ -41,9 +41,9 @@ export function AttentionList({ regions, values, national, link }: {
   const groups = (['high', 'medium'] as const).map(level => ({ level, rows: shown.filter(x => x.level === level), total: items.filter(x => x.level === level).length })).filter(g => g.rows.length)
 
   return (
-    <section aria-labelledby="att-title" className="rounded-lg border border-line bg-surface">
+    <section aria-labelledby="att-title" className="card">
       <div className="flex flex-wrap items-baseline gap-x-3 px-5 pt-4 pb-1">
-        <h2 id="att-title" className="font-serif text-2xl font-semibold">Регионы, требующие внимания</h2>
+        <h2 id="att-title" className="text-lg font-bold tracking-[-0.01em]">Регионы, требующие внимания</h2>
         <span className="text-sm text-muted">{items.length ? `${items.length} из ${regions.filter(r => r.connected).length} подключенных` : 'Нет регионов с заметными отклонениями'}</span>
       </div>
       <p className="px-5 pb-3 text-sm text-muted">
