@@ -7,7 +7,8 @@ import { plural } from '../data/agg'
 
 const ICON = { high: AlertTriangle, medium: CircleAlert, info: Info }
 
-export function Recommendations({ items, link }: { items: Recommendation[]; link: (r: Recommendation) => string | null }) {
+/** label: подпись ссылки; по умолчанию «Открыть обращения» */
+export function Recommendations({ items, link, label }: { items: Recommendation[]; link: (r: Recommendation) => string | null; label?: (r: Recommendation) => string }) {
   const high = items.filter(i => i.level === 'high').length
   return (
     <section aria-labelledby="rec-title" className="rounded-lg border border-line-strong bg-surface">
@@ -37,7 +38,7 @@ export function Recommendations({ items, link }: { items: Recommendation[]; link
                 <p className="mt-0.5">{r.action}</p>
                 {to && (
                   <Link to={to} className="mt-2 inline-flex items-center gap-1.5 text-sm font-medium text-accent underline underline-offset-4 hover:text-accent-hover">
-                    Открыть обращения <ArrowRight size={15} aria-hidden="true" />
+                    {label?.(r) ?? 'Открыть обращения'} <ArrowRight size={15} aria-hidden="true" />
                   </Link>
                 )}
               </div>

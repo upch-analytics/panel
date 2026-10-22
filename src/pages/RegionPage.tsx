@@ -1,12 +1,13 @@
 import { useMemo } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { ArrowLeft, ChevronRight } from 'lucide-react'
+import { ArrowLeft, ChevronRight, FileText } from 'lucide-react'
 import { useData } from '../data/load'
 import { carry, useFilters } from '../data/filters'
 import { byCategory, monthly, num, pct, pp, previousYear, rates, sumCube } from '../data/agg'
 import { compareLabel, periodLabel, periodRange } from '../data/period'
 import { recommendations, type MuniInput } from '../data/rules'
 import { scopeAppeals, ruDate, STATUS } from '../data/records'
+import { numWord } from '../data/agg'
 import type { DemoData } from '../data/types'
 import { FilterBar } from '../components/FilterBar'
 import { KpiBand, coreCells, type KpiCell } from '../components/KpiBand'
@@ -87,9 +88,16 @@ export function RegionPage() {
       </nav>
       <div className="flex flex-wrap items-end justify-between gap-4">
         <PageTitle sub={`${data.meta.districts[region.district]} федеральный округ. ${periodLabel(data, f.period)}`}>{region.name}</PageTitle>
-        <Link to={back} className="no-print mb-6 inline-flex items-center gap-2 rounded-sm border border-line-strong bg-surface px-4 py-2 font-medium hover:bg-surface-hover">
-          <ArrowLeft size={17} aria-hidden="true" /> Вернуться к карте России
-        </Link>
+        <div className="no-print mb-6 flex flex-wrap gap-2">
+          {region.connected && (
+            <Link to={`/reports${carry(f.params, { t: `r:${region.code}` })}`} className="inline-flex items-center gap-2 rounded-sm border border-line-strong bg-surface px-4 py-2 font-medium hover:bg-surface-hover">
+              <FileText size={17} aria-hidden="true" /> Отчет по региону
+            </Link>
+          )}
+          <Link to={back} className="inline-flex items-center gap-2 rounded-sm border border-line-strong bg-surface px-4 py-2 font-medium hover:bg-surface-hover">
+            <ArrowLeft size={17} aria-hidden="true" /> Вернуться к карте России
+          </Link>
+        </div>
       </div>
     </>
   )
@@ -108,6 +116,7 @@ export function RegionPage() {
   if (!model) return <>{header}<FilterBar showDistrict={false} current={region.code} /></>
 
   const cmp = compareLabel(data, f.period).replace('к тому же периоду ', 'к ')
+  const openOverdue = model.curA.filter(a => a.overdue && !a.doneDate).length
   const link = (folder: string, extra: Record<string, string> = {}) => `/appeals${carry(f.params, { region: region.code, folder, ...extra })}`
   const r = rates(model.cur), n = rates(model.national)
   const cmpBadge = (v: number, nat: number, higherIsBad: boolean): KpiCell['compare'] => {
@@ -135,7 +144,19 @@ export function RegionPage() {
       <div className="flex flex-col gap-5">
         <FilterBar showDistrict={false} current={region.code} />
         <KpiBand cells={cells} label="Основные показатели региона" />
-        <Recommendations items={model.recs} link={rec => (rec.link ? link(rec.link.folder ?? 'all', { ...(rec.link.cat ? { cat: rec.link.cat } : {}), ...(rec.link.sort ? { sort: rec.link.sort } : {}) }) : null)} />
+        <Recommendations
+          items={model.recs}
+          link={rec => {
+            if (!rec.link) return null
+            // Если открытых просроченных нет, ведем к рассмотренным с нарушением срока
+            const folder = rec.link.folder === 'overdue_now' && !openOverdue ? 'overdue' : rec.link.folder ?? 'all'
+            return link(folder, { ...(rec.link.cat ? { cat: rec.link.cat } : {}), ...(rec.link.sort ? { sort: rec.link.sort } : {}) })
+          }}
+          // Подпись говорит, сколько обращений откроется, чтобы переход от «45 с нарушением срока» к 5 не удивлял
+          label={rec => rec.link?.folder === 'overdue_now'
+            ? (openOverdue ? `Открыть ${numWord(openOverdue, 'просроченное сейчас', 'просроченных сейчас', 'просроченных сейчас')}` : 'Открыть обращения с нарушением срока')
+            : 'Открыть обращения'}
+        />
 
         <div className="grid gap-5 xl:grid-cols-[2fr_3fr]">
           <section aria-labelledby="rcat-title" className="min-w-0 rounded-lg border border-line bg-surface px-3 pt-4 pb-4">

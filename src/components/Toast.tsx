@@ -1,4 +1,5 @@
-import { createContext, useCallback, useContext, useState, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react'
+import { useLocation } from 'react-router-dom'
 import { CheckCircle2, X } from 'lucide-react'
 
 // Уведомление о демонстрационном действии (напомнить, продлить срок)
@@ -7,6 +8,9 @@ const Ctx = createContext<(text: string) => void>(() => {})
 
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [text, setText] = useState<string | null>(null)
+  const { pathname } = useLocation()
+  // Уведомление относится к действию на текущей странице: при переходе оно закрывается
+  useEffect(() => { setText(null) }, [pathname])
   const show = useCallback((t: string) => {
     setText(t)
     window.setTimeout(() => setText(cur => (cur === t ? null : cur)), 5000)

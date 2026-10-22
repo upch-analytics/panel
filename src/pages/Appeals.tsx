@@ -86,6 +86,11 @@ export function Appeals() {
 
   return (
     <>
+      {region && (
+        <nav aria-label="Навигация" className="mt-6 -mb-3 text-sm">
+          <Link to={`/region/${region}${carry(p)}`} className="inline-flex items-center gap-1 text-accent underline underline-offset-4"><ArrowLeft size={14} aria-hidden="true" />{names.get(region)}</Link>
+        </nav>
+      )}
       <PageTitle sub={`${scope}. ${periodLabel(data, f.period)}`}>Обращения</PageTitle>
       <div className="flex flex-col gap-5">
         <FilterBar regionMode="filter">
