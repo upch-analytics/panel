@@ -18,7 +18,8 @@ export const THRESHOLDS = {
   restored: { high: 0.65, medium: 0.75, minDiff: 0.05 }, // доля восстановленных прав ниже средней (отношение)
   growth: { medium: 0.25, minAbs: 15 },                  // рост категории к прошлому году: +25% и не меньше 15 обращений
   repeatGrowth: { minDiff: 0.05, minRep: 15 },          // доля повторных в категории выросла на 5 п.п., не меньше 15 повторных
-  load: { medium: 1.5, high: 2 },                        // незавершенных на исполнителя относительно среднего по России
+  load: { medium: 1.5, high: 2, elevated: 1.2 },         // незавершенных на исполнителя относительно среднего по России;
+                                                        // elevated: с какого уровня причиной просрочек называется нагрузка
 }
 
 export type Signal = {
@@ -78,7 +79,7 @@ export interface Recommendation {
 }
 
 export interface CategoryInput { id: string; name: string; t: Totals; prev?: Totals }
-export interface MuniInput { name: string; cur: number; prev: number; topTopic: string }
+export interface MuniInput { name: string; cur: number; prev: number; topTopic: string; /** обращений с нарушением срока */ over?: number }
 
 const fmtPct = (v: number) => pct(v)
 const fmtPp = (v: number) => `${(v * 100).toFixed(1).replace('.', ',')} п.п.`
@@ -95,13 +96,29 @@ export function recommendations(input: {
   const out: Recommendation[] = []
   const sig = signals(input.region, input.national)
 
+  // Причина просрочек зависит от нагрузки: при нагрузке не выше средней совет про перераспределение
+  // противоречил бы блоку «Нагрузка на исполнителей», поэтому указываются ответы органов власти и территории
+  const loadRatio = input.openPerExecutor / input.nationalOpenPerExecutor
+  const fmt1 = (v: number) => v.toFixed(1).replace('.', ',')
+  const loadText = `${fmt1(input.openPerExecutor)} незавершенных обращения на исполнителя при ${fmt1(input.nationalOpenPerExecutor)} по России`
+  const overMunis = input.munis
+    .filter(m => (m.over ?? 0) >= 2 && m.cur >= 10)
+    .sort((a, b) => (b.over! / b.cur) - (a.over! / a.cur))
+    .slice(0, 2)
+  const overMuniText = overMunis.map(m => `${m.name} (${fmtPct(m.over! / m.cur)})`).join(', ')
+  const loadHigh = Number.isFinite(loadRatio) && loadRatio >= T.load.elevated
+
   for (const s of sig) {
     if (s.metric === 'overdue') out.push({
       id: 'overdue', level: s.level,
       title: 'Доля просроченных обращений выше общероссийской',
       metric: `${fmtPct(s.value)} при ${fmtPct(s.national)} по России, выше на ${fmtPp(s.value - s.national)} (в ${s.ratio.toFixed(1).replace('.', ',')} раза)`,
-      why: 'Нарушение сроков снижает доверие заявителей и может указывать на перегрузку исполнителей или задержку ответов органов власти.',
-      action: 'Рекомендуется проверить распределение нагрузки между ответственными исполнителями и причины нарушения сроков.',
+      why: loadHigh
+        ? `Нарушение сроков снижает доверие заявителей. Нагрузка на исполнителей выше средней: ${loadText}.`
+        : `Нарушение сроков снижает доверие заявителей. Нагрузка на исполнителей не выше средней (${loadText}), поэтому вероятная причина: задержка ответов органов власти на запросы${overMunis.length ? `. Больше всего просрочек в территориях: ${overMuniText}` : ''}.`,
+      action: loadHigh
+        ? 'Рекомендуется проверить распределение нагрузки между ответственными исполнителями и причины нарушения сроков.'
+        : `Рекомендуется проверить, как органы власти соблюдают сроки ответов на запросы${overMunis.length ? `, в первую очередь по территориям: ${overMunis.map(m => m.name).join(', ')}` : ''}.`,
       // Действовать можно только по открытым просроченным: самые давние сверху
       link: { folder: 'overdue_now', sort: 'overdue_desc' },
     })
