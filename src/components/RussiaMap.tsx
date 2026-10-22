@@ -8,6 +8,7 @@ import { Maximize2, Minus, Plus, Search, ArrowRight, X } from 'lucide-react'
 import type { Region, RegionsGeo } from '../data/types'
 import { num, pct, rates, type Totals } from '../data/agg'
 import { MAP_MODES, type MapMode } from '../data/filters'
+import { THRESHOLDS } from '../data/rules'
 
 // Интерактивная карта субъектов РФ.
 // Проекция: коническая равновеликая Альберса, центральный меридиан 100° в.д., Чукотка не разрывается.
@@ -138,6 +139,9 @@ export function RussiaMap({ geo, regions, values, mode, onMode, onOpen, focus }:
     return f
   }, [paths, byCode, cls])
 
+  // Малые выборки: доли неустойчивы, регион обводится пунктиром
+  const lowN = useMemo(() => new Set([...values].filter(([code, t]) => byCode.get(code)?.connected && t.rec > 0 && t.rec < THRESHOLDS.minRec).map(([code]) => code)), [values, byCode])
+
   const dimmed = useMemo(() => {
     const s = new Set<string>()
     if (focus) for (const p of paths) if (!focus.includes(p.code)) s.add(p.code)
@@ -174,7 +178,7 @@ export function RussiaMap({ geo, regions, values, mode, onMode, onOpen, focus }:
         </div>
       </div>
 
-      <div ref={wrapRef} className="relative border-y border-line">
+      <div ref={wrapRef} className="relative flex flex-col border-y border-line">
         <svg ref={svgRef} viewBox={`0 0 ${W} ${H}`} className="block h-auto w-full touch-none select-none" role="group" aria-label={`Карта субъектов Российской Федерации. Показатель: ${m.title}`}>
           <defs>
             <pattern id="hatch-off" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
@@ -184,12 +188,15 @@ export function RussiaMap({ geo, regions, values, mode, onMode, onOpen, focus }:
           </defs>
           <g ref={gRef}>
             <Regions paths={paths} fills={fills} dimmed={dimmed} names={byCode} onEnter={showTip} onLeave={hideTip} onOpen={onOpen} />
+            {paths.filter(p => lowN.has(p.code)).map(p => (
+              <path key={`low-${p.code}`} d={p.d} fill="none" stroke="var(--color-ink-2)" strokeWidth={1} strokeDasharray="3 2" vectorEffect="non-scaling-stroke" pointerEvents="none" />
+            ))}
             {tip && <path d={path(geo.features.find(f => f.properties.code === tip.code)!) ?? ''} fill="none" stroke="var(--color-ink)" strokeWidth={2} vectorEffect="non-scaling-stroke" pointerEvents="none" />}
           </g>
         </svg>
 
         {/* Поиск */}
-        <div className="absolute top-3 left-3 w-64 max-w-[calc(100%-5rem)]">
+        <div className="relative z-20 order-first m-3 w-auto sm:absolute sm:top-0 sm:left-0 sm:w-64">
           <div className="flex items-center gap-2 rounded-sm border border-line-strong bg-surface px-2.5 shadow-pop focus-within:border-accent">
             <Search size={16} className="shrink-0 text-muted" aria-hidden="true" />
             <input
@@ -221,7 +228,7 @@ export function RussiaMap({ geo, regions, values, mode, onMode, onOpen, focus }:
         </div>
 
         {/* Масштаб */}
-        <div className="absolute top-3 right-3 flex flex-col overflow-hidden rounded-sm border border-line-strong bg-surface shadow-pop">
+        <div className="absolute top-[4.25rem] right-3 flex flex-col overflow-hidden rounded-sm border border-line-strong bg-surface shadow-pop sm:top-3">
           <button type="button" onClick={() => zoomBy(1.6)} className="grid size-9 place-items-center hover:bg-surface-hover" aria-label="Приблизить"><Plus size={18} /></button>
           <button type="button" onClick={() => zoomBy(1 / 1.6)} className="grid size-9 place-items-center border-t border-line hover:bg-surface-hover" aria-label="Отдалить"><Minus size={18} /></button>
           <button type="button" onClick={resetZoom} className="grid size-9 place-items-center border-t border-line hover:bg-surface-hover" aria-label="Показать всю Россию"><Maximize2 size={16} /></button>
@@ -252,6 +259,7 @@ export function RussiaMap({ geo, regions, values, mode, onMode, onOpen, focus }:
                 <p className="mt-2 border-t border-line pt-2 text-muted">
                   {m.title}: {cls.has(tip.code) ? `класс ${(cls.get(tip.code)! + 1)} из 5` : 'нет данных'}
                 </p>
+                {lowN.has(tip.code) && <p className="mt-1 text-muted">Меньше {THRESHOLDS.minRec} обращений за период: доли неустойчивы</p>}
               </>
             ) : (
               <p className="mt-1 text-muted">Нет данных за выбранный период</p>
@@ -279,9 +287,10 @@ export function RussiaMap({ geo, regions, values, mode, onMode, onOpen, focus }:
             ))}
           </div>
         </div>
-        <div className="flex gap-4 text-sm">
+        <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
           <span className="flex items-center gap-1.5"><span className="hatch-off inline-block h-3 w-6 rounded-[2px]" />Не подключен к ФГИС</span>
           <span className="flex items-center gap-1.5"><span className="inline-block h-3 w-6 rounded-[2px] bg-map-nodata" />Нет данных за период</span>
+          {lowN.size > 0 && <span className="flex items-center gap-1.5"><span className="inline-block h-3 w-6 rounded-[2px] border border-dashed border-ink-2" />Меньше {THRESHOLDS.minRec} обращений</span>}
         </div>
         {m.note && <p className="w-full text-sm text-muted">{m.note}</p>}
       </div>

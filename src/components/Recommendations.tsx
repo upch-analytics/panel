@@ -2,6 +2,8 @@ import { Link } from 'react-router-dom'
 import { AlertTriangle, Info, CircleAlert, ArrowRight } from 'lucide-react'
 import type { Recommendation } from '../data/rules'
 import { LEVEL } from './AttentionList'
+import { Methodology } from './Methodology'
+import { plural } from '../data/agg'
 
 const ICON = { high: AlertTriangle, medium: CircleAlert, info: Info }
 
@@ -12,7 +14,7 @@ export function Recommendations({ items, link }: { items: Recommendation[]; link
       <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-line px-5 pt-4 pb-3">
         <h2 id="rec-title" className="font-serif text-2xl font-semibold">Приоритетные проблемы и рекомендации</h2>
         <span className="text-sm text-muted">
-          {high ? `${high} с высоким уровнем внимания, ` : ''}сформировано по правилам из показателей за период
+          {high ? `${high} ${plural(high, 'проблема', 'проблемы', 'проблем')} с высоким уровнем внимания. ` : ''}Сформировано по правилам из показателей за период
         </span>
       </div>
       <ol className="divide-y divide-line">
@@ -20,8 +22,7 @@ export function Recommendations({ items, link }: { items: Recommendation[]; link
           const Icon = ICON[r.level]
           const to = link(r)
           return (
-            <li key={r.id} className="relative grid gap-x-4 gap-y-2 py-4 pr-5 pl-6 md:grid-cols-[1fr_1fr]">
-              <span className={`absolute inset-y-3 left-0 w-1 rounded-r ${LEVEL[r.level].bar}`} aria-hidden="true" />
+            <li key={r.id} className="grid gap-x-6 gap-y-2 px-5 py-4 md:grid-cols-[1fr_1fr]">
               <div>
                 <div className="flex flex-wrap items-center gap-2">
                   <Icon size={18} className={r.level === 'high' ? 'text-bad' : r.level === 'medium' ? 'text-mid' : 'text-accent'} aria-hidden="true" />
@@ -44,9 +45,10 @@ export function Recommendations({ items, link }: { items: Recommendation[]; link
           )
         })}
       </ol>
-      <p className="border-t border-line px-5 py-3 text-sm text-muted">
-        Рекомендации являются основанием для дополнительной проверки и анализа и не означают вывода о нарушении прав. Правила и пороги описаны в README.
-      </p>
+      <div className="space-y-2 border-t border-line px-5 py-3 text-sm text-muted">
+        <p>Рекомендации являются основанием для дополнительной проверки и анализа и не означают вывода о нарушении прав.</p>
+        <Methodology />
+      </div>
     </section>
   )
 }

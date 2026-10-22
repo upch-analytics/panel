@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom'
 
 export function PageTitle({ children, sub }: { children: string; sub?: string }) {
   return (
-    <div className="mt-7 mb-6">
+    <div className="mt-5 mb-4">
       <h1 className="font-serif text-4xl font-semibold tracking-tight">{children}</h1>
       {sub && <p className="mt-1 text-muted">{sub}</p>}
     </div>

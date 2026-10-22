@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
+import { ArrowUpRight } from 'lucide-react'
 import type { ReactNode } from 'react'
-import { change, num, pct, pp, rates, signedPct, type Totals } from '../data/agg'
+import { change, num, numWord, pct, pp, rates, signedPct, type Totals } from '../data/agg'
 
 // Полоса ключевых показателей: ячейки в одной панели с разделителями (DESIGN.md, «Полоса показателей»)
 
@@ -26,8 +27,9 @@ export function KpiBand({ cells, label = 'Ключевые показатели'
   return (
     <section aria-label={label} className={`grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-line bg-line [&>*:last-child:nth-child(odd)]:col-span-2 xl:[&>*:last-child:nth-child(odd)]:col-span-1 ${COLS[cells.length as 4 | 5] ?? 'xl:grid-cols-5'}`}>
       {cells.map(c => (
-        <Link key={c.label} to={c.to} title={c.hint} className="group flex flex-col bg-surface px-4 py-4 2xl:px-5 transition-colors hover:bg-surface-hover focus-visible:relative focus-visible:z-10">
-          <span className="text-sm text-muted">{c.label}</span>
+        <Link key={c.label} to={c.to} title={c.hint} className="group relative flex flex-col bg-surface px-4 py-3.5 2xl:px-5 transition-colors hover:bg-surface-hover focus-visible:z-10">
+          <ArrowUpRight size={16} className="absolute top-3.5 right-3.5 text-accent opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100" aria-hidden="true" />
+          <span className="pr-5 text-sm text-muted">{c.label}</span>
           <span className="num mt-1.5 font-serif text-3xl font-semibold">{c.value}</span>
           {c.sub && <span className="mt-1 text-sm text-ink-2">{c.sub}</span>}
           {c.delta && <span className={`mt-0.5 text-sm ${toneCls[c.tone ?? 'neutral']}`}>{c.delta}</span>}
@@ -36,7 +38,6 @@ export function KpiBand({ cells, label = 'Ключевые показатели'
               {c.compare.text}
             </span>
           )}
-          <span className="mt-auto pt-2 text-sm text-accent opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">Открыть обращения</span>
         </Link>
       ))}
     </section>
@@ -73,7 +74,7 @@ export function coreCells(cur: Totals, prev: Totals | null, compare: string, lin
     {
       label: 'Права восстановлены',
       value: pct(r.restShare),
-      sub: `${num(cur.rest)} из ${num(cur.viol)} дел с нарушением`,
+      sub: `${num(cur.rest)} из ${numWord(cur.viol, 'дела', 'дел', 'дел')} с нарушением`,
       delta: withCmp(pp(restD)),
       tone: tone(restD, false),
       to: link('restored'),
@@ -82,7 +83,7 @@ export function coreCells(cur: Totals, prev: Totals | null, compare: string, lin
     {
       label: 'Доля повторных',
       value: pct(r.repShare),
-      sub: `${num(cur.rep)} повторных`,
+      sub: numWord(cur.rep, 'повторное', 'повторных', 'повторных'),
       delta: withCmp(pp(repD)),
       tone: tone(repD, true),
       to: link('repeat'),

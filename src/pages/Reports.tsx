@@ -97,8 +97,8 @@ export function Reports() {
       </div>
       <div className="flex flex-col gap-5">
         <div className="no-print">
-          <FilterBar showRegion={false}>
-            <label className="flex max-w-full min-w-0 flex-col gap-1">
+          <FilterBar showRegion={false} showDistrict={false}>
+            <label className="flex max-w-full min-w-0 flex-col gap-1 xl:flex-row xl:items-center xl:gap-2">
               <span className="text-sm text-muted">Территория отчета</span>
               <select className="select" value={territory} onChange={e => f.set({ t: e.target.value === 'ru' ? null : e.target.value })}>
                 {territories.map(t => <option key={t.id} value={t.id}>{t.label}</option>)}
@@ -127,7 +127,7 @@ export function Reports() {
                 <p className="mt-1 text-ink-2">{period}{catName ? `, ${catName.toLowerCase()}` : ''}. Сравнение {compareLabel(data, f.period) || 'не проводится'}</p>
                 <p className="mt-1 text-sm text-muted">Дата формирования: {created}</p>
               </div>
-              <span className="rounded-full border border-bad/25 bg-bad-soft px-2.5 py-0.5 text-xs font-semibold text-bad">Демонстрационные данные</span>
+              <span className="rounded-full border border-line-strong bg-surface px-2.5 py-0.5 text-xs font-semibold text-ink-2">Демонстрационные данные</span>
               <div className="no-print flex w-full gap-2 sm:w-auto">
                 <button type="button" onClick={exportCsv} disabled={!inds.length} className="inline-flex items-center gap-2 rounded-sm bg-accent px-4 py-2 font-medium text-white hover:bg-accent-hover disabled:opacity-50"><Download size={16} aria-hidden="true" />Выгрузить CSV</button>
                 <button type="button" onClick={() => window.print()} className="inline-flex items-center gap-2 rounded-sm border border-line-strong bg-surface px-4 py-2 font-medium hover:bg-surface-hover"><Printer size={16} aria-hidden="true" />Печать</button>
@@ -143,18 +143,27 @@ export function Reports() {
                     </tr>
                   </thead>
                   <tbody>
-                    {report.rows.map(r => (
-                      <tr key={r.name} className={`border-b border-line ${r.total ? 'font-semibold' : ''}`}>
-                        <td className="py-2 pr-4">{r.name}</td>
-                        {inds.map(i => <td key={i.id} className="py-2 pr-4 text-right">{i.fmt(i.value(r.t, r.pop, r.prev))}</td>)}
-                      </tr>
-                    ))}
+                    {report.rows.map(r => {
+                      const total = report.rows[report.rows.length - 1]
+                      // Доля хуже итоговой более чем на 1 п.п.: выделяется, чтобы отчет сразу показывал проблемные строки
+                      const worse = (i: Ind) => {
+                        if (r.total || !['over', 'rep', 'rest'].includes(i)) return false
+                        const v = INDICATORS.find(x => x.id === i)!.value(r.t, r.pop, r.prev), tv = INDICATORS.find(x => x.id === i)!.value(total.t, total.pop, total.prev)
+                        return i === 'rest' ? tv - v > 0.05 : v - tv > 0.01
+                      }
+                      return (
+                        <tr key={r.name} className={`border-b border-line ${r.total ? 'font-semibold' : ''}`}>
+                          <td className="py-2 pr-4">{r.name}</td>
+                          {inds.map(i => <td key={i.id} className={`py-2 pr-4 text-right ${worse(i.id) ? 'font-semibold text-bad' : ''}`}>{i.fmt(i.value(r.t, r.pop, r.prev))}</td>)}
+                        </tr>
+                      )
+                    })}
                   </tbody>
                 </table>
               </div>
             ) : <p className="mt-4 text-muted">Отметьте хотя бы один показатель.</p>}
             <p className="mt-4 text-sm text-muted">
-              Доля просроченных считается по обращениям с наступившим сроком ответа; доля восстановленных прав: от завершенных дел с установленным нарушением. Все значения демонстрационные и не являются официальной статистикой.
+              Выделены доли хуже итоговой строки: просроченные и повторные выше более чем на 1 п.п., восстановленные права ниже более чем на 5 п.п. Доля просроченных считается по обращениям с наступившим сроком ответа; доля восстановленных прав: от завершенных дел с установленным нарушением. Все значения демонстрационные и не являются официальной статистикой.
             </p>
           </article>
         )}

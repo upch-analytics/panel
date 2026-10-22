@@ -98,6 +98,13 @@ export function monthly(data: DemoData, f: Filter): { month: string; t: Totals }
   return out
 }
 
+/** Согласование с числом: plural(5, 'обращение', 'обращения', 'обращений') */
+export function plural(n: number, one: string, few: string, many: string) {
+  const a = Math.abs(Math.round(n)) % 100, b = a % 10
+  return a > 10 && a < 20 ? many : b === 1 ? one : b >= 2 && b <= 4 ? few : many
+}
+export const numWord = (n: number, one: string, few: string, many: string) => `${Math.round(n).toLocaleString('ru-RU')} ${plural(n, one, few, many)}`
+
 export const pct = (v: number, digits = 1) => (Number.isFinite(v) ? (v * 100).toFixed(digits).replace('.', ',') + '%' : 'нет данных')
 export const pp = (v: number) => (Number.isFinite(v) ? `${v > 0 ? '+' : v < 0 ? '-' : ''}${Math.abs(v * 100).toFixed(1).replace('.', ',')} п.п.` : '')
 export const num = (v: number) => Math.round(v).toLocaleString('ru-RU')

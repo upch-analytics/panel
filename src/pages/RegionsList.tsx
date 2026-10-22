@@ -5,12 +5,12 @@ import { useData } from '../data/load'
 import { carry, useFilters } from '../data/filters'
 import { byRegion, num, pct, rates, sumCube } from '../data/agg'
 import { periodLabel } from '../data/period'
-import { signals } from '../data/rules'
+import { severity, signals } from '../data/rules'
 import { FilterBar } from '../components/FilterBar'
 import { LEVEL } from '../components/AttentionList'
 import { PageTitle } from './Common'
 
-type Key = 'name' | 'rec' | 'per10k' | 'over' | 'rep' | 'rest'
+type Key = 'name' | 'rec' | 'per10k' | 'over' | 'rep' | 'rest' | 'att'
 const COLS: { key: Key; label: string }[] = [
   { key: 'name', label: 'Субъект' },
   { key: 'rec', label: 'Обращений' },
@@ -24,7 +24,7 @@ export function RegionsList() {
   const { data } = useData()
   const f = useFilters()
   const [q, setQ] = useState('')
-  const [sort, setSort] = useState<{ key: Key; dir: 1 | -1 }>({ key: 'name', dir: 1 })
+  const [sort, setSort] = useState<{ key: Key; dir: 1 | -1 }>({ key: 'att', dir: -1 })
 
   const rows = useMemo(() => {
     if (!f.range) return []
@@ -39,7 +39,8 @@ export function RegionsList() {
         const s = t ? signals(t, national) : []
         return {
           r, t, s,
-          v: { name: 0, rec: t?.rec ?? -1, per10k: t ? (t.rec * 10) / r.pop : -1, over: x?.overShare ?? -1, rep: x?.repShare ?? -1, rest: x?.restShare ?? -1 } as Record<Key, number>,
+          v: { name: 0, rec: t?.rec ?? -1, per10k: t ? (t.rec * 10) / r.pop : -1, over: x?.overShare ?? -1, rep: x?.repShare ?? -1, rest: x?.restShare ?? -1, att: s.length ? severity(s) : t ? 0 : -1 } as Record<Key, number>,
+          bad: new Set(s.map(z => z.metric)),
         }
       })
   }, [data, f.range, f.cat, f.fd])
@@ -73,11 +74,15 @@ export function RegionsList() {
                       </button>
                     </th>
                   ))}
-                  <th scope="col" className="px-4 py-2 font-medium">Внимание</th>
+                  <th scope="col" className="px-4 py-2 font-medium" aria-sort={sort.key === 'att' ? 'descending' : 'none'}>
+                    <button type="button" className="inline-flex items-center gap-1 hover:text-accent" onClick={() => setSort({ key: 'att', dir: -1 })}>
+                      Внимание{sort.key === 'att' && <ArrowDown size={14} aria-hidden="true" />}
+                    </button>
+                  </th>
                 </tr>
               </thead>
               <tbody>
-                {shown.map(({ r, t, s, v }) => {
+                {shown.map(({ r, t, s, v, bad }) => {
                   const top = s.some(x => x.level === 'high') ? 'high' : s.length ? 'medium' : null
                   return (
                     <tr key={r.code} className="border-b border-line last:border-0 hover:bg-surface-hover">
@@ -86,9 +91,9 @@ export function RegionsList() {
                         <>
                           <td className="px-4 py-2 text-right">{num(v.rec)}</td>
                           <td className="px-4 py-2 text-right">{v.per10k.toFixed(1).replace('.', ',')}</td>
-                          <td className="px-4 py-2 text-right">{pct(v.over)}</td>
-                          <td className="px-4 py-2 text-right">{pct(v.rep)}</td>
-                          <td className="px-4 py-2 text-right">{pct(v.rest)}</td>
+                          <td className={`px-4 py-2 text-right ${bad.has('overdue') ? 'font-semibold text-bad' : ''}`}>{pct(v.over)}</td>
+                          <td className={`px-4 py-2 text-right ${bad.has('repeat') ? 'font-semibold text-bad' : ''}`}>{pct(v.rep)}</td>
+                          <td className={`px-4 py-2 text-right ${bad.has('restored') ? 'font-semibold text-bad' : ''}`}>{pct(v.rest)}</td>
                         </>
                       ) : (
                         <td colSpan={5} className="px-4 py-2 text-right text-muted">Нет данных: не подключен к ФГИС</td>

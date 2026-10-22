@@ -1,4 +1,4 @@
-import { pct, rates, type Totals } from './agg'
+import { numWord, pct, rates, type Totals } from './agg'
 
 // Правила, по которым регион попадает в «Регионы, требующие внимания» и в рекомендации.
 // Пороги одинаковые везде и описаны в README. Сравнение идет с общероссийским значением
@@ -9,6 +9,8 @@ export type Level = 'high' | 'medium' | 'info'
 export const THRESHOLDS = {
   /** минимум обращений за период, чтобы доли были показательны */
   minRec: 50,
+  /** отклонение доли от общероссийской должно быть статистически устойчивым: z-оценка биномиальной доли */
+  minZ: 2,
   /** минимум завершенных дел с установленным нарушением для доли восстановленных прав */
   minViol: 10,
   overdue: { high: 1.6, medium: 1.4, minDiff: 0.01 },   // доля просроченных выше средней в N раз и не меньше чем на 1 п.п.
@@ -27,20 +29,23 @@ export type Signal = {
   ratio: number
 }
 
+/** z-оценка отклонения доли p в выборке n от общероссийской p0 */
+export const zScore = (p: number, p0: number, n: number) => (n > 0 && p0 > 0 && p0 < 1 ? (p - p0) / Math.sqrt((p0 * (1 - p0)) / n) : 0)
+
 export function signals(region: Totals, national: Totals): Signal[] {
   const T = THRESHOLDS
   if (region.rec < T.minRec) return []
   const r = rates(region), n = rates(national)
   const out: Signal[] = []
   const over = r.overShare / n.overShare
-  if (r.overShare - n.overShare >= T.overdue.minDiff && over >= T.overdue.medium)
+  if (r.overShare - n.overShare >= T.overdue.minDiff && over >= T.overdue.medium && zScore(r.overShare, n.overShare, region.due) >= T.minZ)
     out.push({ metric: 'overdue', level: over >= T.overdue.high ? 'high' : 'medium', value: r.overShare, national: n.overShare, ratio: over })
   const rep = r.repShare / n.repShare
-  if (r.repShare - n.repShare >= T.repeat.minDiff && rep >= T.repeat.medium)
+  if (r.repShare - n.repShare >= T.repeat.minDiff && rep >= T.repeat.medium && zScore(r.repShare, n.repShare, region.rec) >= T.minZ)
     out.push({ metric: 'repeat', level: rep >= T.repeat.high ? 'high' : 'medium', value: r.repShare, national: n.repShare, ratio: rep })
   if (region.viol >= T.minViol) {
     const rest = r.restShare / n.restShare
-    if (n.restShare - r.restShare >= T.restored.minDiff && rest <= T.restored.medium)
+    if (n.restShare - r.restShare >= T.restored.minDiff && rest <= T.restored.medium && -zScore(r.restShare, n.restShare, region.viol) >= T.minZ)
       out.push({ metric: 'restored', level: rest <= T.restored.high ? 'high' : 'medium', value: r.restShare, national: n.restShare, ratio: rest })
   }
   return out
@@ -130,7 +135,7 @@ export function recommendations(input: {
         score: g,
         id: `growth-${c.id}`, level: 'medium',
         title: `Рост обращений: ${c.name.toLowerCase()}`,
-        metric: `${c.t.rec} обращений, рост ${Math.round(g * 100)}% к тому же периоду прошлого года (было ${c.prev.rec})`,
+        metric: `${numWord(c.t.rec, 'обращение', 'обращения', 'обращений')}, рост ${Math.round(g * 100)}% к тому же периоду прошлого года (было ${c.prev.rec})`,
         why: m.length ? `Наибольший прирост обращений в территориях: ${m.map(x => x.name).join(', ')}.` : 'Рост заметно выше общей динамики обращений.',
         action: m.length ? 'Рекомендуется провести дополнительный анализ ситуации в указанных территориях.' : 'Рекомендуется проанализировать структуру обращений по категории и выявить общие причины.',
         link: { cat: c.id },

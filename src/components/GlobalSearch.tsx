@@ -41,7 +41,7 @@ export function GlobalSearch() {
   const go = (h?: Hit) => { if (!h?.to) return; setQ(''); setOpen(false); navigate(h.to) }
 
   return (
-    <div className="relative ml-auto hidden w-80 md:block">
+    <div className="relative order-last w-full md:order-none md:ml-auto md:w-80">
       <label className="flex items-center gap-2 rounded-md border border-line bg-surface px-3 text-muted focus-within:border-accent">
         <Search size={16} aria-hidden="true" />
         <input

@@ -105,7 +105,7 @@ export function RegionPage() {
       </>
     )
   }
-  if (!model) return <>{header}<FilterBar /></>
+  if (!model) return <>{header}<FilterBar showDistrict={false} current={region.code} /></>
 
   const cmp = compareLabel(data, f.period).replace('к тому же периоду ', 'к ')
   const link = (folder: string, extra: Record<string, string> = {}) => `/appeals${carry(f.params, { region: region.code, folder, ...extra })}`
@@ -133,14 +133,14 @@ export function RegionPage() {
     <>
       {header}
       <div className="flex flex-col gap-5">
-        <FilterBar />
+        <FilterBar showDistrict={false} current={region.code} />
         <KpiBand cells={cells} label="Основные показатели региона" />
         <Recommendations items={model.recs} link={rec => (rec.link ? link(rec.link.folder ?? 'all', rec.link.cat ? { cat: rec.link.cat } : {}) : null)} />
 
         <div className="grid gap-5 xl:grid-cols-[2fr_3fr]">
           <section aria-labelledby="rcat-title" className="min-w-0 rounded-lg border border-line bg-surface px-3 pt-4 pb-4">
             <h2 id="rcat-title" className="px-2 font-serif text-2xl font-semibold">Категории прав</h2>
-            <p className="mt-1 mb-2 px-2 text-sm text-muted">Количество, доля и изменение {cmp}. Выделен рост от 10%</p>
+            <p className="mt-1 mb-2 px-2 text-sm text-muted">Количество, доля и изменение {cmp}. Выделен рост от 10%</p>
             <CategoryBars rows={model.catRows} selected={f.cat} link={id => link('all', { cat: id })} />
           </section>
           <section aria-labelledby="rdyn-title" className="min-w-0 rounded-lg border border-line bg-surface px-5 pt-4 pb-5">
@@ -164,7 +164,7 @@ export function RegionPage() {
                     <tr key={m.name} className="border-b border-line last:border-0">
                       <td className="py-2 pr-4 font-medium">{m.name}</td>
                       <td className="py-2 pr-4 text-right">{num(m.cur)}</td>
-                      <td className={`py-2 pr-4 text-right whitespace-nowrap ${m.cur - m.prev > 0 && m.g >= 0.25 ? 'font-semibold text-bad' : 'text-muted'}`}>{m.prev ? `${m.cur - m.prev >= 0 ? '+' : ''}${m.cur - m.prev} (${Math.round(m.g * 100)}%)` : 'новые'}</td>
+                      <td className={`py-2 pr-4 text-right whitespace-nowrap ${m.cur - m.prev > 0 && m.g >= 0.25 ? 'font-semibold text-ink' : 'text-muted'}`}>{m.prev ? `${m.cur - m.prev >= 0 ? '+' : ''}${m.cur - m.prev} (${Math.round(m.g * 100)}%)` : 'новые'}</td>
                       <td className="py-2 text-ink-2">{m.topTopic}</td>
                     </tr>
                   ))}
@@ -177,7 +177,9 @@ export function RegionPage() {
               <h2 id="load-title" className="text-xl font-semibold">Нагрузка на исполнителей</h2>
               <p className="num mt-2 font-serif text-3xl font-semibold">{model.load.perExecutor.toFixed(1).replace('.', ',')}</p>
               <p className="text-sm text-ink-2">незавершенных обращений на исполнителя ({num(model.load.open)} на {model.load.executors})</p>
-              <p className={`mt-1 text-sm ${model.load.perExecutor > model.natLoad.perExecutor * 1.2 ? 'text-bad' : 'text-muted'}`}>В среднем по России {model.natLoad.perExecutor.toFixed(1).replace('.', ',')}</p>
+              <p className={`mt-1 text-sm ${model.load.perExecutor > model.natLoad.perExecutor * 1.2 ? 'text-bad' : 'text-muted'}`}>
+                {model.load.perExecutor > model.natLoad.perExecutor * 1.2 ? 'Выше' : model.load.perExecutor < model.natLoad.perExecutor * 0.8 ? 'Ниже' : 'Около'} среднего по России: {model.natLoad.perExecutor.toFixed(1).replace('.', ',')}
+              </p>
             </section>
             <section aria-labelledby="grp-title" className="min-w-0 rounded-lg border border-line bg-surface p-5">
               <h2 id="grp-title" className="text-xl font-semibold">Категории граждан</h2>

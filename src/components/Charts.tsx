@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { ArrowUpRight } from 'lucide-react'
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis, ReferenceLine } from 'recharts'
 import { change, num, signedPct, type Totals } from '../data/agg'
 import { monthShort, monthName } from '../data/period'
@@ -61,15 +62,19 @@ export function CategoryBars({ rows, link, selected, growthFrom = 0.1 }: { rows:
         const growing = Number.isFinite(g) && g >= growthFrom
         return (
           <li key={r.id}>
-            <Link to={link(r.id)} className={`grid grid-cols-[minmax(9rem,13rem)_1fr_auto] items-center gap-x-3 rounded-sm px-2 py-2 hover:bg-surface-hover ${selected === r.id ? 'bg-accent-soft' : ''}`}>
-              <span className="text-sm font-medium">{r.name}</span>
-              <span className="relative h-4 rounded-[3px] bg-bg" aria-hidden="true">
-                <span className="absolute inset-y-0 left-0 rounded-[3px] bg-map-4" style={{ width: `${(r.t.rec / max) * 100}%` }} />
-              </span>
-              <span className="flex items-baseline justify-end gap-2 text-sm">
+            {/* Две строки: название и цифры, под ними полоса на всю ширину (полоса не сжимается в узкой колонке) */}
+            <Link to={link(r.id)} className={`block rounded-sm px-2 py-2 hover:bg-surface-hover ${selected === r.id ? 'bg-accent-soft' : ''}`}>
+              <span className="flex items-baseline gap-2 text-sm">
+                <span className="mr-auto font-medium">{r.name}</span>
                 <span className="num font-medium">{num(r.t.rec)}</span>
                 <span className="w-12 text-right text-muted">{total ? ((r.t.rec / total) * 100).toFixed(1).replace('.', ',') : 0}%</span>
-                <span className={`w-16 text-right ${growing ? 'font-semibold text-bad' : 'text-muted'}`}>{Number.isFinite(g) ? signedPct(g) : ''}</span>
+                <span className={`flex w-20 items-center justify-end gap-0.5 ${growing ? 'font-semibold text-ink' : 'text-muted'}`}>
+                  {growing && <ArrowUpRight size={14} aria-label="заметный рост" />}
+                  {Number.isFinite(g) ? signedPct(g) : ''}
+                </span>
+              </span>
+              <span className="relative mt-1.5 block h-2.5 rounded-[3px] bg-bg" aria-hidden="true">
+                <span className="absolute inset-y-0 left-0 rounded-[3px] bg-map-4" style={{ width: `${Math.max(1, (r.t.rec / max) * 100)}%` }} />
               </span>
             </Link>
           </li>

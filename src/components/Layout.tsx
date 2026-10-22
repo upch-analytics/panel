@@ -8,12 +8,13 @@ import { GlobalSearch } from './GlobalSearch'
 const NAV = [
   { to: '/', label: 'Обзор по России', icon: BarChart3, end: true },
   { to: '/map', label: 'Карта регионов', icon: MapIcon },
-  { to: '/regions', label: 'Региональная аналитика', icon: MapPin },
+  { to: '/regions', label: 'Региональная аналитика', icon: MapPin, also: '/region/' },
   { to: '/appeals', label: 'Обращения', icon: Inbox },
   { to: '/reports', label: 'Отчетность', icon: FileText },
 ]
 
 function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
+  const { pathname } = useLocation()
   return (
     <div className="on-dark flex h-full flex-col gap-6 bg-menu px-3.5 py-5 text-white">
       <div className="flex items-center gap-2.5 px-2">
@@ -26,17 +27,16 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
         </span>
       </div>
       <nav aria-label="Разделы" className="flex flex-col gap-1">
-        {NAV.map(({ to, label, icon: Icon, end }) => (
+        {NAV.map(({ to, label, icon: Icon, end, also }) => (
           <NavLink
             key={to}
             to={to}
             end={end}
             onClick={onNavigate}
-            className={({ isActive }) =>
-              `flex items-center gap-2.5 rounded-md px-2.5 py-2.5 font-medium transition-colors ${
+            // Страница отдельного региона относится к разделу «Региональная аналитика»
+            className={({ isActive: active }) => { const isActive = active || (!!also && pathname.startsWith(also)); return `flex items-center gap-2.5 rounded-md px-2.5 py-2.5 font-medium transition-colors ${
                 isActive ? 'bg-accent text-white' : 'text-menu-muted hover:bg-white/6 hover:text-white'
-              }`
-            }
+              }` }}
           >
             <Icon size={18} aria-hidden="true" />
             {label}
@@ -61,7 +61,7 @@ function Topbar({ onMenu }: { onMenu: () => void }) {
       </button>
       {period && <span className="text-sm text-muted">Период: <span className="text-ink">{period}</span></span>}
       {today && <span className="text-sm text-muted">Обновлено {today}</span>}
-      <span className="rounded-full border border-bad/25 bg-bad-soft px-2.5 py-0.5 text-xs font-semibold text-bad">
+      <span className="rounded-full border border-line-strong bg-surface px-2.5 py-0.5 text-xs font-semibold text-ink-2">
         Демонстрационный режим
       </span>
       <GlobalSearch />

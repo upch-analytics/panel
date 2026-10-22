@@ -4,17 +4,19 @@ import { useData } from '../data/load'
 import { carry, useFilters } from '../data/filters'
 import { periodLabel, serializePeriod, monthName, type Period } from '../data/period'
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+/** short: короткая видимая подпись, полная остается доступным именем поля */
+function Field({ label, short, hidden, children }: { label: string; short?: string; hidden?: boolean; children: React.ReactNode }) {
   return (
-    <label className="flex max-w-full min-w-0 flex-col gap-1">
-      <span className="text-sm text-muted">{label}</span>
+    <label className="flex max-w-full min-w-0 flex-col gap-1 xl:flex-row xl:items-center xl:gap-2" aria-label={short ? label : undefined}>
+      <span className={hidden ? 'sr-only' : 'text-sm text-muted'} aria-hidden={short ? true : undefined}>{short ?? label}</span>
       {children}
     </label>
   )
 }
 
 /** regionMode: navigate открывает страницу региона, filter задает фильтр region в адресе (раздел «Обращения») */
-export function FilterBar({ showRegion = true, regionMode = 'navigate', children }: { showRegion?: boolean; regionMode?: 'navigate' | 'filter'; children?: React.ReactNode }) {
+/** current: код открытого региона (страница региона): список показывает его, а выбор открывает другой регион */
+export function FilterBar({ showRegion = true, showDistrict = true, regionMode = 'navigate', current, children }: { showRegion?: boolean; showDistrict?: boolean; regionMode?: 'navigate' | 'filter'; current?: string; children?: React.ReactNode }) {
   const { data } = useData()
   const { period, cat, fd, set, reset, params } = useFilters()
   const navigate = useNavigate()
@@ -34,15 +36,15 @@ export function FilterBar({ showRegion = true, regionMode = 'navigate', children
   const chips: { label: string; clear: () => void }[] = []
   if (serializePeriod(period) !== 'y2026') chips.push({ label: periodLabel(data, period), clear: () => set({ p: null }) })
   if (cat) chips.push({ label: data.meta.categories.find(c => c.id === cat)?.name ?? cat, clear: () => set({ cat: null }) })
-  if (fd) chips.push({ label: `${data.meta.districts[fd]} ФО`, clear: () => set({ fd: null }) })
+  if (fd && showDistrict) chips.push({ label: `${data.meta.districts[fd]} ФО`, clear: () => set({ fd: null }) })
   const regionParam = regionMode === 'filter' ? params.get('region') : null
   if (regionParam) chips.push({ label: data.regions.find(r => r.code === regionParam)?.name ?? regionParam, clear: () => set({ region: null }) })
 
   const monthOptions = data.meta.months.filter(m => m.startsWith(String(year)))
 
   return (
-    <section aria-label="Фильтры" className="no-print rounded-lg border border-line bg-surface p-4">
-      <div className="flex flex-wrap items-end gap-3">
+    <section aria-label="Фильтры" className="no-print rounded-lg border border-line bg-surface px-4 py-3">
+      <div className="flex flex-wrap items-end gap-x-4 gap-y-3 xl:items-center">
         <Field label="Период">
           <select className="select" value={period.kind} onChange={e => onKind(e.target.value as Period['kind'])}>
             <option value="year">Год</option>
@@ -93,21 +95,21 @@ export function FilterBar({ showRegion = true, regionMode = 'navigate', children
             </Field>
           </>
         )}
-        <Field label="Категория прав">
-          <select className="select" value={cat ?? ''} onChange={e => set({ cat: e.target.value || null })}>
+        <Field label="Категория прав" short="Категория">
+          <select className="select w-52" value={cat ?? ''} onChange={e => set({ cat: e.target.value || null })}>
             <option value="">Все категории</option>
             {data.meta.categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
         </Field>
-        <Field label="Федеральный округ">
-          <select className="select" value={fd ?? ''} onChange={e => set({ fd: e.target.value || null })}>
+        {showDistrict && <Field label="Федеральный округ" short="Округ">
+          <select className="select w-48" value={fd ?? ''} onChange={e => set({ fd: e.target.value || null })}>
             <option value="">Вся Россия</option>
             {Object.entries(data.meta.districts).map(([id, name]) => <option key={id} value={id}>{name}</option>)}
           </select>
-        </Field>
+        </Field>}
         {showRegion && (
-          <Field label="Регион">
-            <select className="select" value={regionMode === 'filter' ? params.get('region') ?? '' : ''} onChange={e => {
+          <Field label="Регион" hidden={!current}>
+            <select className="select w-48" value={regionMode === 'filter' ? params.get('region') ?? '' : current ?? ''} onChange={e => {
               if (regionMode === 'filter') set({ region: e.target.value || null, page: null })
               else if (e.target.value) navigate(`/region/${e.target.value}${carry(params)}`)
             }}>

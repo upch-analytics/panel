@@ -12,7 +12,8 @@ import { NotFound, PageTitle } from './Common'
 
 const FOLDERS = [
   { id: 'all', label: 'Все', test: () => true },
-  { id: 'overdue', label: 'Просроченные', test: (a: Appeal) => a.overdue },
+  { id: 'overdue_now', label: 'Просрочены сейчас', test: (a: Appeal) => a.overdue && !a.doneDate },
+  { id: 'overdue', label: 'С нарушением срока', test: (a: Appeal) => a.overdue },
   { id: 'in_work', label: 'На рассмотрении', test: (a: Appeal) => !a.doneDate },
   { id: 'repeat', label: 'Повторные', test: (a: Appeal) => a.repeat },
   { id: 'restored', label: 'Права восстановлены', test: (a: Appeal) => a.status === 'restored' },
@@ -24,6 +25,14 @@ const SORTS = [
   { id: 'overdue_desc', label: 'По сроку просрочки' },
 ]
 const PAGE = 25
+
+/** Открытое просроченное: требует действия сейчас; закрытое с опозданием: факт, приглушенно */
+function DeadlineCell({ a }: { a: Appeal }) {
+  if (a.overdue && !a.doneDate) return <span className="font-medium text-bad">просрочено на {a.overdueDays} дн.</span>
+  if (a.overdue) return <span className="text-muted">ответ с опозданием {a.overdueDays} дн.</span>
+  if (a.doneDate) return <span className="text-muted">рассмотрено {ruDate(a.doneDate)}</span>
+  return <span className="text-muted">до {ruDate(a.deadline)}</span>
+}
 
 export function StatusBadge({ s, short }: { s: Status; short?: boolean }) {
   return <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-semibold whitespace-nowrap ${STATUS[s].cls}`} title={STATUS[s].label}>{short ? STATUS[s].short : STATUS[s].label}</span>
@@ -78,7 +87,7 @@ export function Appeals() {
       <PageTitle sub={`${scope}. ${periodLabel(data, f.period)}`}>Обращения</PageTitle>
       <div className="flex flex-col gap-5">
         <FilterBar regionMode="filter">
-          <label className="flex max-w-full min-w-0 flex-col gap-1">
+          <label className="flex max-w-full min-w-0 flex-col gap-1 xl:flex-row xl:items-center xl:gap-2">
             <span className="text-sm text-muted">Статус</span>
             <select className="select" value={status ?? ''} onChange={e => f.set({ status: e.target.value || null })}>
               <option value="">Все статусы</option>
@@ -108,7 +117,7 @@ export function Appeals() {
                 {SORTS.map(s => <option key={s.id} value={s.id}>{s.label}</option>)}
               </select>
             </label>
-            <span className="text-sm text-muted">Найдено: {list.length.toLocaleString('ru-RU')}</span>
+            {(p.get('q') || status) && <span className="text-sm text-muted">Найдено: {list.length.toLocaleString('ru-RU')}</span>}
             <button type="button" onClick={exportCsv} disabled={!list.length} className="ml-auto inline-flex items-center gap-2 rounded-sm border border-line-strong bg-surface px-3 py-2 text-sm font-medium hover:bg-surface-hover disabled:opacity-50">
               <Download size={16} aria-hidden="true" /> Выгрузить в CSV
             </button>
@@ -131,11 +140,11 @@ export function Appeals() {
                   <tr key={a.id} className="border-b border-line last:border-0 hover:bg-surface-hover">
                     <td className="px-3 py-2.5 whitespace-nowrap"><Link to={`/appeals/${a.id}${carry(p)}`} className="num font-medium text-accent underline-offset-4 hover:underline">№ {a.id}</Link></td>
                     <td className="px-3 py-2.5 whitespace-nowrap">{ruDate(a.received)}</td>
-                    <td className="min-w-64 px-3 py-2.5"><span className="block">{a.topic}</span><span className="text-muted">{names.get(a.code)}, {a.muni}</span></td>
+                    <td className="min-w-64 px-3 py-2.5"><span className="block">{a.topic}</span><span className="text-muted">{region ? a.muni : `${names.get(a.code)}, ${a.muni}`}</span></td>
                     <td className="px-3 py-2.5">{catName.get(a.cat)}</td>
-                    <td className="px-3 py-2.5">{a.executor}</td>
+                    <td className="px-3 py-2.5 whitespace-nowrap">{a.executor}</td>
                     <td className="px-3 py-2.5"><span className="flex flex-wrap gap-1"><StatusBadge s={a.status} short />{a.repeat && <span className="inline-block rounded-full bg-mid-soft px-2 py-0.5 text-xs font-semibold text-mid">Повторное</span>}</span></td>
-                    <td className="px-3 py-2.5 text-right whitespace-nowrap">{a.overdue ? <span className="font-medium text-bad">просрочка {a.overdueDays} дн.</span> : <span className="text-muted">до {ruDate(a.deadline)}</span>}</td>
+                    <td className="w-36 px-3 py-2.5 text-right"><DeadlineCell a={a} /></td>
                   </tr>
                 ))}
                 {!shown.length && (
@@ -243,7 +252,7 @@ export function AppealCard() {
               <Row label="Муниципалитет">{a.muni}</Row>
               <Row label="Ответственный">{a.executor}</Row>
               <Row label="Срок ответа">{ruDate(a.deadline)}{a.extended ? ' (продлен)' : ''}</Row>
-              <Row label="Просрочка">{a.overdue ? <span className="font-medium text-bad">{a.overdueDays} дн.</span> : 'нет'}</Row>
+              <Row label="Просрочка">{a.overdue ? (a.doneDate ? `ответ с опозданием на ${a.overdueDays} дн.` : <span className="font-medium text-bad">{a.overdueDays} дн., рассмотрение не завершено</span>) : 'нет'}</Row>
               {a.doneDate && <Row label="Рассмотрено">{ruDate(a.doneDate)}</Row>}
             </dl>
           </section>
