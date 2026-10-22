@@ -1,5 +1,5 @@
-import { useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useMemo, useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import { useData } from '../data/load'
 import { carry, useFilters } from '../data/filters'
 import { byCategory, byRegion, monthly, num, previousYear, sumCube, type Totals } from '../data/agg'
@@ -7,6 +7,9 @@ import { compareLabel, periodLabel, periodRange } from '../data/period'
 import { FilterBar } from '../components/FilterBar'
 import { KpiBand, coreCells } from '../components/KpiBand'
 import { RussiaMap } from '../components/RussiaMap'
+import { RankList } from '../components/RankList'
+import { MODES } from '../data/mapScale'
+import type { Region } from '../data/types'
 import { CategoryBars, MonthlyChart } from '../components/Charts'
 import { AttentionList } from '../components/AttentionList'
 import { PageTitle } from './Common'
@@ -32,6 +35,7 @@ export function Overview() {
   const f = useFilters()
   const navigate = useNavigate()
   const model = useOverviewModel()
+  const [hover, setHover] = useState<string | null>(null)
   const scope = f.fd ? `${data.meta.districts[f.fd]} федеральный округ` : 'Россия'
 
   const charts = useMemo(() => {
@@ -94,6 +98,12 @@ export function Overview() {
           onMode={m => f.set({ map: m })}
           onOpen={code => navigate(`/region/${code}${carry(f.params)}`)}
           focus={f.codes}
+          highlight={hover}
+          aside={
+            <RankList regions={f.fd ? regionsScope : data.regions} values={model.values} mode={f.mode} limit={10} onHover={setHover}
+              link={code => `/region/${code}${carry(f.params)}`}
+              footer={<Link to={`/map${carry(f.params, { map: f.mode })}`} className="font-medium text-accent underline underline-offset-4 hover:text-accent-hover">Все субъекты и федеральные округа</Link>} />
+          }
         />
         <div className="grid gap-5 xl:grid-cols-[3fr_2fr]">
           <section aria-labelledby="dyn-title" className="min-w-0 rounded-lg border border-line bg-surface px-5 pt-4 pb-5">
@@ -118,14 +128,57 @@ export function MapPage() {
   const f = useFilters()
   const navigate = useNavigate()
   const model = useOverviewModel()
+  const [hover, setHover] = useState<string | null>(null)
+  const m = MODES[f.mode]
+
+  // Сравнение федеральных округов в текущем режиме карты: суммы по подключенным субъектам округа
+  const districts = useMemo(() => {
+    if (!model) return []
+    return Object.entries(data.meta.districts).map(([id, name]) => {
+      const regs = data.regions.filter(r => r.district === id && r.connected)
+      const t = regs.reduce((acc, r) => { const v = model.values.get(r.code); if (v) for (const k of Object.keys(acc) as (keyof typeof acc)[]) acc[k] += v[k]; return acc }, { rec: 0, over: 0, done: 0, viol: 0, rest: 0, rep: 0, due: 0, overDue: 0 })
+      const pop = regs.reduce((acc, r) => acc + r.pop, 0)
+      return { id, name, regs: regs.length, total: data.regions.filter(r => r.district === id).length, v: m.value(t, { pop } as Region), rec: t.rec }
+    }).sort((a, b) => (m.invert ? a.v - b.v : b.v - a.v))
+  }, [data, model, m])
+  const national = model ? m.value(model.national, { pop: data.regions.filter(r => r.connected).reduce((s, r) => s + r.pop, 0) } as Region) : NaN
+
   return (
     <>
-      <PageTitle sub={`${periodLabel(data, f.period)}. Наведите на регион, чтобы увидеть показатели, нажмите, чтобы открыть аналитику`}>Карта регионов</PageTitle>
+      <PageTitle sub={`${periodLabel(data, f.period)}. Карта и полный рейтинг субъектов по выбранному показателю`}>Карта регионов</PageTitle>
       <div className="flex flex-col gap-5">
         <FilterBar />
         {model && (
-          <RussiaMap geo={geo} regions={data.regions} values={model.values} mode={f.mode} onMode={m => f.set({ map: m })}
-            onOpen={code => navigate(`/region/${code}${carry(f.params)}`)} focus={f.codes} />
+          <>
+            <RussiaMap geo={geo} regions={data.regions} values={model.values} mode={f.mode} onMode={x => f.set({ map: x })}
+              onOpen={code => navigate(`/region/${code}${carry(f.params)}`)} focus={f.codes} highlight={hover}
+              aside={<RankList regions={f.fd ? data.regions.filter(r => r.district === f.fd) : data.regions} values={model.values} mode={f.mode} onHover={setHover} link={code => `/region/${code}${carry(f.params)}`} />} />
+            <section aria-labelledby="fd-title" className="rounded-lg border border-line bg-surface p-5">
+              <h2 id="fd-title" className="font-serif text-2xl font-semibold">Федеральные округа</h2>
+              <p className="mt-1 text-sm text-muted">{m.title}, за период. По России: {m.fmt(national)}</p>
+              <div className="mt-3 overflow-x-auto">
+                <table className="w-full min-w-[560px] text-sm">
+                  <thead className="text-left text-muted">
+                    <tr className="border-b border-line"><th scope="col" className="py-2 pr-4 font-normal">Округ</th><th scope="col" className="py-2 pr-4 text-right font-normal">{m.title}</th><th scope="col" className="py-2 pr-4 text-right font-normal">Обращений</th><th scope="col" className="py-2 text-right font-normal">Подключено субъектов</th></tr>
+                  </thead>
+                  <tbody>
+                    {districts.map(d => {
+                      const worse = f.mode !== 'count' && Number.isFinite(d.v) && (m.invert ? national - d.v > 0.03 : d.v - national > 0.005)
+                      return (
+                        <tr key={d.id} className="border-b border-line last:border-0">
+                          <td className="py-2 pr-4"><Link to={`/map${carry(f.params, { fd: d.id, map: f.mode })}`} className="font-medium text-accent underline-offset-4 hover:underline">{d.name}</Link></td>
+                          <td className={`py-2 pr-4 text-right ${worse ? 'font-semibold text-bad' : ''}`}>{m.fmt(d.v)}</td>
+                          <td className="py-2 pr-4 text-right">{num(d.rec)}</td>
+                          <td className="py-2 text-right">{d.regs} из {d.total}</td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+              {m.note && <p className="mt-3 text-sm text-muted">{m.note}</p>}
+            </section>
+          </>
         )}
       </div>
     </>

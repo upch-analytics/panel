@@ -28,7 +28,9 @@ lucide-react для иконок. Шрифты Golos Text и Source Serif 4 по
 - `src/data/`: типы и загрузка (`load.tsx`), расчеты (`agg.ts`), периоды (`period.ts`),
   фильтры в адресе страницы (`filters.ts`), правила внимания и рекомендаций (`rules.ts`).
 - `src/components/`: `Layout`, `FilterBar`, `KpiBand`, `RussiaMap`, `Charts`, `AttentionList`,
-  `Recommendations`, `Methodology` (пояснение порогов в интерфейсе), `GlobalSearch`, `Toast`.
+  `Recommendations`, `Methodology` (пояснение порогов в интерфейсе), `GlobalSearch`, `Toast`,
+  `RankList` (рейтинг рядом с картой; на «Карте регионов» полный, плюс таблица округов).
+- `src/data/mapScale.ts`: режимы карты и расчет классов, общие для карты и рейтинга.
 - `src/data/records.ts`: карточки обращений из куба; `src/data/csv.ts`: выгрузка CSV для Excel.
 - `.impeccable/critique/`: снимки критики Impeccable (оценка 26/40 до исправлений этапа 5).
 - `src/components/Layout.tsx`: боковое меню, верхняя панель, обработка ошибки загрузки.

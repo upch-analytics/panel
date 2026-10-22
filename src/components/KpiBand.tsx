@@ -45,14 +45,18 @@ export function KpiBand({ cells, label = 'Ключевые показатели'
 }
 
 /** Четыре основных показателя по набору итогов; используется на главной и на странице региона */
-export function coreCells(cur: Totals, prev: Totals | null, compare: string, link: (folder: string) => string): KpiCell[] {
+/**
+ * neutralTrend: изменение к прошлому году без цвета. На странице региона главный сигнал:
+ * сравнение с Россией, и два цвета у одного показателя противоречили бы друг другу.
+ */
+export function coreCells(cur: Totals, prev: Totals | null, compare: string, link: (folder: string) => string, { neutralTrend = false } = {}): KpiCell[] {
   const r = rates(cur)
   const p = prev ? rates(prev) : null
   const d = (a: number, b: number | undefined) => (b == null || !Number.isFinite(b) ? NaN : a - b)
   const overD = d(r.overShare, p?.overShare)
   const restD = d(r.restShare, p?.restShare)
   const repD = d(r.repShare, p?.repShare)
-  const tone = (v: number, higherIsBad: boolean): Tone => (!Number.isFinite(v) || Math.abs(v) < 0.0005 ? 'neutral' : (v > 0) === higherIsBad ? 'bad' : 'good')
+  const tone = (v: number, higherIsBad: boolean): Tone => (neutralTrend || !Number.isFinite(v) || Math.abs(v) < 0.0005 ? 'neutral' : (v > 0) === higherIsBad ? 'bad' : 'good')
   const withCmp = (s: string) => (s && compare ? `${s} ${compare}` : '')
   return [
     {

@@ -3,10 +3,10 @@ import { geoConicEqualArea, geoPath, geoCentroid } from 'd3-geo'
 import { select } from 'd3-selection'
 import 'd3-transition'
 import { zoom as d3zoom, zoomIdentity, type ZoomBehavior } from 'd3-zoom'
-import { quantile } from 'd3-array'
 import { Maximize2, Minus, Plus, Search, ArrowRight, X } from 'lucide-react'
 import type { Region, RegionsGeo } from '../data/types'
 import { num, pct, rates, type Totals } from '../data/agg'
+import { classify, MODES, SCALE } from '../data/mapScale'
 import { MAP_MODES, type MapMode } from '../data/filters'
 import { THRESHOLDS } from '../data/rules'
 
@@ -15,15 +15,6 @@ import { THRESHOLDS } from '../data/rules'
 // Цвет: 5 классов по квантилям (20/40/60/80%) значений подключенных субъектов, без ручного назначения.
 
 const W = 1000, H = 560
-const SCALE = ['var(--color-map-1)', 'var(--color-map-2)', 'var(--color-map-3)', 'var(--color-map-4)', 'var(--color-map-5)']
-
-type ModeDef = { title: string; value: (t: Totals, r: Region) => number; fmt: (v: number) => string; invert: boolean; note?: string }
-const MODES: Record<MapMode, ModeDef> = {
-  count: { title: 'Обращений на 10 000 жителей', value: (t, r) => (t.rec * 10) / r.pop, fmt: v => v.toFixed(1).replace('.', ','), invert: false, note: 'Число обращений зависит от численности населения и доступности Уполномоченного и не оценивается как хорошее или плохое' },
-  overdue: { title: 'Доля просроченных обращений', value: t => rates(t).overShare, fmt: v => pct(v), invert: false },
-  repeat: { title: 'Доля повторных обращений', value: t => rates(t).repShare, fmt: v => pct(v), invert: false },
-  restored: { title: 'Доля восстановленных прав', value: t => rates(t).restShare, fmt: v => pct(v), invert: true, note: 'Шкала обратная: чем ниже доля, тем насыщеннее цвет' },
-}
 
 interface Props {
   geo: RegionsGeo
@@ -34,11 +25,15 @@ interface Props {
   onOpen: (code: string) => void
   /** субъекты выбранного федерального округа; остальные приглушаются */
   focus?: string[]
+  /** субъект, выделенный извне (наведение на строку ранжированного списка) */
+  highlight?: string | null
+  /** дополнительный блок справа от карты на широком экране */
+  aside?: React.ReactNode
 }
 
 type Tip = { code: string; x: number; y: number; pinned?: boolean }
 
-export function RussiaMap({ geo, regions, values, mode, onMode, onOpen, focus }: Props) {
+export function RussiaMap({ geo, regions, values, mode, onMode, onOpen, focus, highlight, aside }: Props) {
   const svgRef = useRef<SVGSVGElement>(null)
   const gRef = useRef<SVGGElement>(null)
   const wrapRef = useRef<HTMLDivElement>(null)
@@ -68,25 +63,7 @@ export function RussiaMap({ geo, regions, values, mode, onMode, onOpen, focus }:
 
   // Значения и классы
   const m = MODES[mode]
-  const { cls, edges } = useMemo(() => {
-    const val = new Map<string, number>()
-    for (const [code, t] of values) {
-      const r = byCode.get(code)
-      if (!r) continue
-      const v = m.value(t, r)
-      if (Number.isFinite(v) && t.rec > 0) val.set(code, v)
-    }
-    const sorted = [...val.values()].sort((a, b) => a - b)
-    const th = [0.2, 0.4, 0.6, 0.8].map(q => quantile(sorted, q) ?? 0)
-    const cls = new Map<string, number>()
-    for (const [code, v] of val) {
-      let i = 0
-      while (i < th.length && v >= th[i]) i++
-      cls.set(code, m.invert ? 4 - i : i)
-    }
-    const edges = [sorted[0] ?? 0, ...th, sorted[sorted.length - 1] ?? 0]
-    return { cls, edges }
-  }, [values, byCode, m])
+  const { cls, edges } = useMemo(() => classify(values, byCode, m), [values, byCode, m])
 
   // Зум: колесо, перетаскивание, кнопки
   useEffect(() => {
@@ -178,7 +155,8 @@ export function RussiaMap({ geo, regions, values, mode, onMode, onOpen, focus }:
         </div>
       </div>
 
-      <div ref={wrapRef} className="relative flex flex-col border-y border-line">
+      <div className={`border-y border-line ${aside ? 'xl:grid xl:grid-cols-[minmax(0,1fr)_21rem]' : ''}`}>
+      <div ref={wrapRef} className="relative flex min-w-0 flex-col">
         <svg ref={svgRef} viewBox={`0 0 ${W} ${H}`} className="block h-auto w-full touch-none select-none" role="group" aria-label={`Карта субъектов Российской Федерации. Показатель: ${m.title}`}>
           <defs>
             <pattern id="hatch-off" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
@@ -192,6 +170,7 @@ export function RussiaMap({ geo, regions, values, mode, onMode, onOpen, focus }:
               <path key={`low-${p.code}`} d={p.d} fill="none" stroke="var(--color-ink-2)" strokeWidth={1} strokeDasharray="3 2" vectorEffect="non-scaling-stroke" pointerEvents="none" />
             ))}
             {tip && <path d={path(geo.features.find(f => f.properties.code === tip.code)!) ?? ''} fill="none" stroke="var(--color-ink)" strokeWidth={2} vectorEffect="non-scaling-stroke" pointerEvents="none" />}
+            {highlight && highlight !== tip?.code && <path d={path(geo.features.find(f => f.properties.code === highlight)!) ?? ''} fill="none" stroke="var(--color-accent)" strokeWidth={2.5} vectorEffect="non-scaling-stroke" pointerEvents="none" />}
           </g>
         </svg>
 
@@ -271,6 +250,8 @@ export function RussiaMap({ geo, regions, values, mode, onMode, onOpen, focus }:
             )}
           </div>
         )}
+      </div>
+      {aside && <div className="min-w-0 border-t border-line xl:border-t-0 xl:border-l">{aside}</div>}
       </div>
 
       {/* Легенда */}

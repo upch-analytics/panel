@@ -117,7 +117,7 @@ export function RegionPage() {
     const better = higherIsBad ? d < -0.002 : d > 0.002
     return { text: `${pp(d)} к России (${pct(nat)})`, tone: worse ? 'bad' : better ? 'good' : 'neutral' }
   }
-  const cells = coreCells(model.cur, model.prev, cmp, link)
+  const cells = coreCells(model.cur, model.prev, cmp, link, { neutralTrend: true })
   cells[1].compare = cmpBadge(r.overShare, n.overShare, true)
   cells[2].compare = cmpBadge(r.restShare, n.restShare, false)
   cells[3].compare = cmpBadge(r.repShare, n.repShare, true)

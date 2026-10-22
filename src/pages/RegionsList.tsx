@@ -61,6 +61,11 @@ export function RegionsList() {
               <input value={q} onChange={e => setQ(e.target.value)} className="h-9 w-full bg-transparent text-sm outline-none" placeholder="Найти субъект" aria-label="Найти субъект" />
             </label>
             <span className="text-sm text-muted">{shown.length} субъектов, подключено {shown.filter(x => x.r.connected).length}</span>
+            <span className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted md:ml-auto" aria-hidden="true">
+              <span className="flex items-center gap-1.5"><span className={`size-2.5 rounded-full ${LEVEL.high.dot}`} />высокий уровень внимания</span>
+              <span className="flex items-center gap-1.5"><span className={`size-2.5 rounded-full ${LEVEL.medium.dot}`} />средний</span>
+              <span>значения хуже России выделены</span>
+            </span>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full min-w-[820px] text-sm">
@@ -98,7 +103,10 @@ export function RegionsList() {
                       ) : (
                         <td colSpan={5} className="px-4 py-2 text-right text-muted">Нет данных: не подключен к ФГИС</td>
                       )}
-                      <td className="px-4 py-2">{top && <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${LEVEL[top].chip}`}>{LEVEL[top].label}</span>}</td>
+                      <td className="px-4 py-2">
+                        {/* Уровень точкой: ярлык в каждой строке не несет новой информации, текст в подсказке и для экранных читалок */}
+                        {top && <span className={`relative inline-block size-2.5 rounded-full ${LEVEL[top].dot}`} title={LEVEL[top].group}><span className="sr-only">{LEVEL[top].group}</span></span>}
+                      </td>
                     </tr>
                   )
                 })}

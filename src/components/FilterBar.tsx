@@ -36,8 +36,11 @@ export function FilterBar({ showRegion = true, showDistrict = true, regionMode =
   const chips: { label: string; clear: () => void }[] = []
   if (serializePeriod(period) !== 'y2026') chips.push({ label: periodLabel(data, period), clear: () => set({ p: null }) })
   if (cat) chips.push({ label: data.meta.categories.find(c => c.id === cat)?.name ?? cat, clear: () => set({ cat: null }) })
-  if (fd && showDistrict) chips.push({ label: `${data.meta.districts[fd]} ФО`, clear: () => set({ fd: null }) })
   const regionParam = regionMode === 'filter' ? params.get('region') : null
+  // При выбранном регионе округ следует из него; смена округа сбрасывает регион
+  const regionDistrict = regionParam ? data.regions.find(r => r.code === regionParam)?.district ?? null : null
+  const fdValue = regionDistrict ?? fd
+  if (fd && showDistrict && !regionDistrict) chips.push({ label: `${data.meta.districts[fd]} ФО`, clear: () => set({ fd: null }) })
   if (regionParam) chips.push({ label: data.regions.find(r => r.code === regionParam)?.name ?? regionParam, clear: () => set({ region: null }) })
 
   const monthOptions = data.meta.months.filter(m => m.startsWith(String(year)))
@@ -102,7 +105,7 @@ export function FilterBar({ showRegion = true, showDistrict = true, regionMode =
           </select>
         </Field>
         {showDistrict && <Field label="Федеральный округ" short="Округ">
-          <select className="select w-48" value={fd ?? ''} onChange={e => set({ fd: e.target.value || null })}>
+          <select className="select w-48" value={fdValue ?? ''} onChange={e => set({ fd: e.target.value || null, ...(regionParam ? { region: null } : {}) })}>
             <option value="">Вся Россия</option>
             {Object.entries(data.meta.districts).map(([id, name]) => <option key={id} value={id}>{name}</option>)}
           </select>
@@ -114,7 +117,7 @@ export function FilterBar({ showRegion = true, showDistrict = true, regionMode =
               else if (e.target.value) navigate(`/region/${e.target.value}${carry(params)}`)
             }}>
               <option value="">{regionMode === 'filter' ? 'Все регионы' : 'Открыть регион…'}</option>
-              {[...data.regions].sort((a, b) => a.name.localeCompare(b.name, 'ru')).map(r => (
+              {[...data.regions].filter(r => regionMode !== 'filter' || !fdValue || r.district === fdValue).sort((a, b) => a.name.localeCompare(b.name, 'ru')).map(r => (
                 <option key={r.code} value={r.code}>{r.name}{r.connected ? '' : ' (нет данных)'}</option>
               ))}
             </select>
