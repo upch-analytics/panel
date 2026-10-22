@@ -25,9 +25,11 @@ lucide-react для иконок. Шрифты Golos Text и Source Serif 4 по
   Единственный источник списка субъектов: из него строятся и карта, и данные, и метрика охвата.
 - `scripts/generate-data.mjs`: генератор демонстрационных данных → `public/data/demo.json`.
 - `scripts/build-geo.mjs`: проставляет коды субъектов в контуры → `public/data/regions.geo.json`.
-- `src/data/`: типы, загрузка данных (`DataProvider`, `useData`).
+- `src/data/`: типы и загрузка (`load.tsx`), расчеты (`agg.ts`), периоды (`period.ts`),
+  фильтры в адресе страницы (`filters.ts`), правила внимания и рекомендаций (`rules.ts`).
+- `src/components/`: `Layout`, `FilterBar`, `KpiBand`, `RussiaMap`, `Charts`, `AttentionList`.
 - `src/components/Layout.tsx`: боковое меню, верхняя панель, обработка ошибки загрузки.
-- `src/pages/`: страницы разделов.
+- `src/pages/`: страницы разделов (`Overview.tsx`: главная и «Карта регионов»; `Placeholder.tsx`: разделы этапа 4).
 - `design/directions/`: наброски этапа 1 (не входят в сборку).
 - `DESIGN.md`: дизайн-система «Атлас», токены и правила.
 

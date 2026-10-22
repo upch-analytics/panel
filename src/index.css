@@ -113,6 +113,14 @@
 
 @layer components {
   .num { font-variant-numeric: lining-nums tabular-nums; }
+  /* Выпадающий список: стрелка chevron-down (lucide) цвета muted */
+  .select {
+    height: 2.25rem; border-radius: var(--radius-sm); border: 1px solid var(--color-line-strong);
+    background: var(--color-surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23566170' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat right 8px center / 16px;
+    padding: 0 2rem 0 0.625rem; font-size: var(--text-sm); color: var(--color-ink); appearance: none; cursor: pointer;
+    max-width: 100%; min-width: 0;
+  }
+  .select:hover { border-color: var(--color-faint); }
   .hatch-off { background: repeating-linear-gradient(45deg, var(--color-map-off) 0 3px, var(--color-map-off-hatch) 3px 5px); }
 }
 

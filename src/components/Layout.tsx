@@ -1,7 +1,8 @@
 import { useEffect, useState, type ReactNode } from 'react'
-import { NavLink, useLocation } from 'react-router-dom'
+import { NavLink, useLocation, useSearchParams } from 'react-router-dom'
 import { BarChart3, FileText, Inbox, MapPin, Map as MapIcon, Menu, Search, ShieldCheck, X, RotateCw } from 'lucide-react'
 import { useDataState } from '../data/load'
+import { parsePeriod, periodLabel } from '../data/period'
 
 const NAV = [
   { to: '/', label: 'Обзор по России', icon: BarChart3, end: true },
@@ -48,13 +49,16 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
 
 function Topbar({ onMenu }: { onMenu: () => void }) {
   const { state } = useDataState()
-  const today = state.status === 'ready' ? state.data.meta.today.split('-').reverse().join('.') : null
+  const [params] = useSearchParams()
+  const ready = state.status === 'ready'
+  const today = ready ? state.data.meta.today.split('-').reverse().join('.') : null
+  const period = ready ? periodLabel(state.data, parsePeriod(params.get('p'))) : null
   return (
     <header className="no-print flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-line py-3">
       <button type="button" onClick={onMenu} className="-ml-1 rounded-sm p-1.5 text-ink lg:hidden" aria-label="Открыть меню">
         <Menu size={22} />
       </button>
-      <span className="text-sm text-muted">Период: январь - 20 октября 2026</span>
+      {period && <span className="text-sm text-muted">Период: <span className="text-ink">{period}</span></span>}
       {today && <span className="text-sm text-muted">Обновлено {today}</span>}
       <span className="rounded-full border border-bad/25 bg-bad-soft px-2.5 py-0.5 text-xs font-semibold text-bad">
         Демонстрационный режим

@@ -41,9 +41,9 @@ const YEAR_TREND = { 2023: 0.9, 2024: 0.96, 2025: 1.0, 2026: 1.035 };
 
 // Регионы для сравнительного анализа проекта получают выраженный профиль
 const PROFILES = {
-  '38': { over: 2.1, rep: 1.15, rest: 0.92, housingGrowth: 1.35 },     // Иркутская: просрочки, рост жилищных
+  '38': { over: 2.4, rep: 1.15, rest: 0.92, housingGrowth: 1.35 },     // Иркутская: просрочки, рост жилищных
   '24': { over: 1.25, rep: 1.55, rest: 0.95, socialGrowth: 1.3 },       // Красноярский край: повторные
-  '87': { over: 1.1, rep: 1.2, rest: 0.6, rate: 1.6 },                   // Чукотка: мало восстановленных, высокая обращаемость
+  '87': { over: 1.1, rep: 1.2, rest: 0.6, rate: 4.5 },                   // Чукотка: мало восстановленных, высокая обращаемость
   '05': { over: 1.8, rep: 1.1, rest: 0.85 },
   '64': { over: 1.6, rep: 1.0, rest: 0.95 },
   '14': { over: 1.3, rep: 1.35, rest: 0.8 },
@@ -62,7 +62,10 @@ function hash(str) {
 }
 function rng(key) {
   let a = hash(SEED + ':' + key);
-  return () => { a |= 0; a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+  const next = () => { a |= 0; a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+  // Прогрев: первые значения для близких ключей хуже перемешаны
+  for (let i = 0; i < 8; i++) next();
+  return next;
 }
 // Целое число с ожиданием mean: округление со случайной дробью
 const draw = (r, mean) => { const f = Math.floor(mean); return f + (r() < mean - f ? 1 : 0); };
@@ -81,10 +84,12 @@ const regions = REGIONS.map(ref => {
   const connected = !NOT_CONNECTED.includes(ref.code);
   // Обращений на 10 000 жителей в год: 3-11, логнормально
   const rate = (4.2 * Math.exp((r() - 0.5) * 0.9)) * (p.rate || 1);
-  const overBase = 0.036 * Math.exp((r() - 0.5) * 0.8) * (p.over || 1);
-  const repBase = 0.105 * Math.exp((r() - 0.5) * 0.5) * (p.rep || 1);
+  // У регионов с профилем отклонение задано профилем, у остальных небольшой случайный разброс
+  const jitter = (w) => (Object.keys(p).length ? 1 + (r() - 0.5) * 0.08 : Math.exp((r() - 0.5) * w));
+  const overBase = 0.036 * jitter(0.3) * (p.over || 1);
+  const repBase = 0.105 * jitter(0.24) * (p.rep || 1);
   const violBase = 0.36 + (r() - 0.5) * 0.12;
-  const restBase = 0.5 * Math.exp((r() - 0.5) * 0.4) * (p.rest || 1);
+  const restBase = 0.5 * jitter(0.2) * (p.rest || 1);
   const trend = 1 + (r() - 0.5) * 0.08; // собственная динамика региона за год
   // Структура по категориям: базовые доли с региональным отклонением
   const catW = CATEGORIES.map(c => c.share * Math.exp((r() - 0.5) * 0.5));
@@ -99,6 +104,8 @@ const cube = {};
 for (const R of regions) {
   if (!R.connected) continue;
   const arr = [];
+  // Один поток случайных чисел на субъект, ячейки обходятся в фиксированном порядке
+  const r = rng(`cells:${R.ref.code}`);
   months.forEach((ym, mi) => {
     const [y, m] = ym.split('-').map(Number);
     const isPartial = y === LAST_MONTH.y && m === LAST_MONTH.m;
@@ -109,7 +116,6 @@ for (const R of regions) {
     const growth = YEAR_TREND[y] * Math.pow(R.trend, yearsFrom2025);
     const monthly = R.ref.pop / 10 * R.rate / 12 * SEASON[m - 1] * growth * (isPartial ? PARTIAL : 1);
     CATEGORIES.forEach((c, ci) => {
-      const r = rng(`cell:${R.ref.code}:${ym}:${c.id}`);
       let catMul = 1;
       if (c.id === 'housing' && R.p.housingGrowth && y === 2026) catMul = R.p.housingGrowth;
       if (c.id === 'social' && R.p.socialGrowth && y === 2026) catMul = R.p.socialGrowth;
