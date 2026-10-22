@@ -27,7 +27,10 @@ lucide-react для иконок. Шрифты Golos Text и Source Serif 4 по
 - `scripts/build-geo.mjs`: проставляет коды субъектов в контуры → `public/data/regions.geo.json`.
 - `src/data/`: типы и загрузка (`load.tsx`), расчеты (`agg.ts`), периоды (`period.ts`),
   фильтры в адресе страницы (`filters.ts`), правила внимания и рекомендаций (`rules.ts`).
-- `src/components/`: `Layout`, `FilterBar`, `KpiBand`, `RussiaMap`, `Charts`, `AttentionList`.
+- `src/components/`: `Layout`, `FilterBar`, `KpiBand`, `RussiaMap`, `Charts`, `AttentionList`,
+  `Recommendations`, `Methodology` (пояснение порогов в интерфейсе), `GlobalSearch`, `Toast`.
+- `src/data/records.ts`: карточки обращений из куба; `src/data/csv.ts`: выгрузка CSV для Excel.
+- `.impeccable/critique/`: снимки критики Impeccable (оценка 26/40 до исправлений этапа 5).
 - `src/components/Layout.tsx`: боковое меню, верхняя панель, обработка ошибки загрузки.
 - `src/pages/`: `Overview.tsx` (главная и «Карта регионов»), `RegionPage.tsx`, `RegionsList.tsx`,
   `Appeals.tsx` (список и карточка), `Reports.tsx`, `Common.tsx` (заголовок, «не найдено»).
