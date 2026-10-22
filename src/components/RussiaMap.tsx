@@ -155,7 +155,7 @@ export function RussiaMap({ geo, regions, values, mode, onMode, onOpen, focus, h
         </div>
       </div>
 
-      <div className={`border-y border-line ${aside ? 'xl:grid xl:grid-cols-[minmax(0,1fr)_21rem]' : ''}`}>
+      <div className={`border-y border-line ${aside ? 'xl:grid xl:grid-cols-[minmax(0,1fr)_18rem]' : ''}`}>
       <div ref={wrapRef} className="relative flex min-w-0 flex-col">
         <svg ref={svgRef} viewBox={`0 0 ${W} ${H}`} className="block h-auto w-full touch-none select-none" role="group" aria-label={`Карта субъектов Российской Федерации. Показатель: ${m.title}`}>
           <defs>

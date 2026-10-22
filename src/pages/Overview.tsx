@@ -89,7 +89,6 @@ export function Overview() {
       <PageTitle sub={`${periodLabel(data, f.period)}${cmp ? `, сравнение ${cmp}` : ''}`}>{`Обращения граждан: ${scope}`}</PageTitle>
       <div className="flex flex-col gap-5">
         <FilterBar />
-        <KpiBand cells={cells} />
         <RussiaMap
           geo={geo}
           regions={data.regions}
@@ -100,11 +99,12 @@ export function Overview() {
           focus={f.codes}
           highlight={hover}
           aside={
-            <RankList regions={f.fd ? regionsScope : data.regions} values={model.values} mode={f.mode} limit={10} onHover={setHover}
+            <RankList regions={f.fd ? regionsScope : data.regions} values={model.values} mode={f.mode} limit={8} onHover={setHover}
               link={code => `/region/${code}${carry(f.params)}`}
               footer={<Link to={`/map${carry(f.params, { map: f.mode })}`} className="font-medium text-accent underline underline-offset-4 hover:text-accent-hover">Все субъекты и федеральные округа</Link>} />
           }
         />
+        <KpiBand cells={cells} />
         <div className="grid gap-5 xl:grid-cols-[3fr_2fr]">
           <section aria-labelledby="dyn-title" className="min-w-0 rounded-lg border border-line bg-surface px-5 pt-4 pb-5">
             <h2 id="dyn-title" className="font-serif text-2xl font-semibold">Поступление обращений по месяцам</h2>
