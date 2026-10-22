@@ -35,7 +35,9 @@ export function AttentionList({ regions, values, national, link }: {
     .filter(x => x.s.length)
     .sort((a, b) => severity(b.s) - severity(a.s))
     .map(x => ({ ...x, level: (x.s.some(s => s.level === 'high') ? 'high' : 'medium') as 'high' | 'medium' }))
-  const shown = all ? items : items.slice(0, 8)
+  // Короткий список показывается целиком, длинный сворачивается до 8
+  const limit = items.length <= 10 ? items.length : 8
+  const shown = all ? items : items.slice(0, limit)
   const groups = (['high', 'medium'] as const).map(level => ({ level, rows: shown.filter(x => x.level === level), total: items.filter(x => x.level === level).length })).filter(g => g.rows.length)
 
   return (
@@ -71,7 +73,7 @@ export function AttentionList({ regions, values, national, link }: {
         </div>
       ))}
       <div className="flex flex-wrap items-center gap-x-6 gap-y-2 border-t border-line px-5 py-3">
-        {items.length > 8 && (
+        {items.length > limit && (
           <button type="button" onClick={() => setAll(v => !v)} className="text-sm font-medium text-accent underline underline-offset-4 hover:text-accent-hover">
             {all ? 'Свернуть список' : `Показать все (${items.length})`}
           </button>

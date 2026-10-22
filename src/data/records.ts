@@ -256,7 +256,7 @@ export function timeline(a: Appeal, today: string): TimelineEvent[] {
     { date: add(1), text: `Зарегистрировано, адресат: ${a.addressee}` },
     { date: add(2), text: `Назначен исполнитель: ${a.executor}` },
     { date: add(4 + Math.floor(r() * 3)), text: `Направлен запрос в ${a.organ}` },
-    { date: add(15 + Math.floor(r() * 8)), text: `Получен ответ: ${a.organ}` },
+    { date: add(15 + Math.floor(r() * 8)), text: `Поступил ответ на запрос в ${a.organ}` },
   ]
   if (a.extended) ev.push({ date: add(29), text: 'Срок рассмотрения продлен на 30 дней' })
   if (a.overdue) ev.push({ date: add(31), text: 'Нарушен срок рассмотрения', tone: 'bad' })

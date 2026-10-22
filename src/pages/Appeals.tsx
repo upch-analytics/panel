@@ -45,7 +45,9 @@ export function Appeals() {
   const folder = FOLDERS.find(x => x.id === p.get('folder')) ?? FOLDERS[0]
   const status = p.get('status') as Status | null
   const region = p.get('region')
-  const sort = SORTS.find(s => s.id === p.get('sort'))?.id ?? 'date_desc'
+  // В папках просрочек по умолчанию сверху самые давние просрочки
+  const defaultSort = folder.id === 'overdue_now' || folder.id === 'overdue' ? 'overdue_desc' : 'date_desc'
+  const sort = SORTS.find(s => s.id === p.get('sort'))?.id ?? defaultSort
   const page = Math.max(1, Number(p.get('page')) || 1)
   const [q, setQ] = useState(p.get('q') ?? '')
 
@@ -113,7 +115,7 @@ export function Appeals() {
             </form>
             <label className="flex items-center gap-2 text-sm text-muted">
               Сортировка
-              <select className="select" value={sort} onChange={e => f.set({ sort: e.target.value === 'date_desc' ? null : e.target.value })}>
+              <select className="select" value={sort} onChange={e => f.set({ sort: e.target.value === defaultSort ? null : e.target.value })}>
                 {SORTS.map(s => <option key={s.id} value={s.id}>{s.label}</option>)}
               </select>
             </label>

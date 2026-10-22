@@ -50,10 +50,10 @@ export function RegionPage() {
     // Муниципалитеты: по карточкам обращений за период и тот же период годом ранее
     const curA = scopeAppeals(data, { range: f.range, codes, cats })
     const prevA = prevF ? scopeAppeals(data, { range: prevF.range, codes, cats }) : []
-    const muni = new Map<string, MuniInput & { topics: Map<string, number> }>()
+    const muni = new Map<string, MuniInput & { topics: Map<string, number>; over: number }>()
     for (const a of curA) {
-      const m = muni.get(a.muni) ?? { name: a.muni, cur: 0, prev: 0, topTopic: '', topics: new Map() }
-      m.cur++; m.topics.set(a.topic, (m.topics.get(a.topic) ?? 0) + 1)
+      const m = muni.get(a.muni) ?? { name: a.muni, cur: 0, prev: 0, over: 0, topTopic: '', topics: new Map() }
+      m.cur++; if (a.overdue) m.over++; m.topics.set(a.topic, (m.topics.get(a.topic) ?? 0) + 1)
       muni.set(a.muni, m)
     }
     for (const a of prevA) { const m = muni.get(a.muni); if (m) m.prev++ }
@@ -135,7 +135,7 @@ export function RegionPage() {
       <div className="flex flex-col gap-5">
         <FilterBar showDistrict={false} current={region.code} />
         <KpiBand cells={cells} label="Основные показатели региона" />
-        <Recommendations items={model.recs} link={rec => (rec.link ? link(rec.link.folder ?? 'all', rec.link.cat ? { cat: rec.link.cat } : {}) : null)} />
+        <Recommendations items={model.recs} link={rec => (rec.link ? link(rec.link.folder ?? 'all', { ...(rec.link.cat ? { cat: rec.link.cat } : {}), ...(rec.link.sort ? { sort: rec.link.sort } : {}) }) : null)} />
 
         <div className="grid gap-5 xl:grid-cols-[2fr_3fr]">
           <section aria-labelledby="rcat-title" className="min-w-0 rounded-lg border border-line bg-surface px-3 pt-4 pb-4">
@@ -152,12 +152,12 @@ export function RegionPage() {
 
         <div className="grid gap-5 lg:grid-cols-3">
           <section aria-labelledby="muni-title" className="min-w-0 rounded-lg border border-line bg-surface p-5 lg:col-span-2">
-            <h2 id="muni-title" className="text-xl font-semibold">Проблемные муниципалитеты</h2>
-            <p className="mt-1 text-sm text-muted">Наибольший прирост обращений {cmp}</p>
+            <h2 id="muni-title" className="text-xl font-semibold">Территории с наибольшим приростом</h2>
+            <p className="mt-1 text-sm text-muted">Прирост обращений {cmp} и доля обращений с нарушением срока</p>
             <div className="mt-3 overflow-x-auto">
-              <table className="w-full min-w-[520px] text-sm">
+              <table className="w-full min-w-[620px] text-sm">
                 <thead className="text-left text-muted">
-                  <tr className="border-b border-line"><th scope="col" className="py-2 pr-4 font-normal">Территория</th><th scope="col" className="py-2 pr-4 text-right font-normal">Обращений</th><th scope="col" className="py-2 pr-4 text-right font-normal">Изменение</th><th scope="col" className="py-2 font-normal">Основная тема</th></tr>
+                  <tr className="border-b border-line"><th scope="col" className="py-2 pr-4 font-normal">Территория</th><th scope="col" className="py-2 pr-4 text-right font-normal">Обращений</th><th scope="col" className="py-2 pr-4 text-right font-normal">Изменение</th><th scope="col" className="py-2 pr-4 text-right font-normal">С нарушением срока</th><th scope="col" className="py-2 font-normal">Основная тема</th></tr>
                 </thead>
                 <tbody>
                   {growthMunis.map(m => (
@@ -165,6 +165,7 @@ export function RegionPage() {
                       <td className="py-2 pr-4 font-medium">{m.name}</td>
                       <td className="py-2 pr-4 text-right">{num(m.cur)}</td>
                       <td className={`py-2 pr-4 text-right whitespace-nowrap ${m.cur - m.prev > 0 && m.g >= 0.25 ? 'font-semibold text-ink' : 'text-muted'}`}>{m.prev ? `${m.cur - m.prev >= 0 ? '+' : ''}${m.cur - m.prev} (${Math.round(m.g * 100)}%)` : 'новые'}</td>
+                      <td className="py-2 pr-4 text-right">{m.cur ? `${((m.over / m.cur) * 100).toFixed(1).replace('.', ',')}%` : ''}</td>
                       <td className="py-2 text-ink-2">{m.topTopic}</td>
                     </tr>
                   ))}

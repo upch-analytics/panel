@@ -5,6 +5,7 @@ import { useFilters } from '../data/filters'
 import { byCategory, num, pct, previousYear, rates, signedPct, change, sumCube, type Totals } from '../data/agg'
 import { compareLabel, periodLabel } from '../data/period'
 import { downloadCsv, stamp, toCsv } from '../data/csv'
+import { THRESHOLDS } from '../data/rules'
 import type { DemoData } from '../data/types'
 import { FilterBar } from '../components/FilterBar'
 import { PageTitle } from './Common'
@@ -147,7 +148,8 @@ export function Reports() {
                       const total = report.rows[report.rows.length - 1]
                       // Доля хуже итоговой более чем на 1 п.п.: выделяется, чтобы отчет сразу показывал проблемные строки
                       const worse = (i: Ind) => {
-                        if (r.total || !['over', 'rep', 'rest'].includes(i)) return false
+                        // Малые выборки не выделяются: доли на них неустойчивы
+                        if (r.total || r.t.rec < THRESHOLDS.minRec || !['over', 'rep', 'rest'].includes(i)) return false
                         const v = INDICATORS.find(x => x.id === i)!.value(r.t, r.pop, r.prev), tv = INDICATORS.find(x => x.id === i)!.value(total.t, total.pop, total.prev)
                         return i === 'rest' ? tv - v > 0.05 : v - tv > 0.01
                       }
@@ -162,8 +164,8 @@ export function Reports() {
                 </table>
               </div>
             ) : <p className="mt-4 text-muted">Отметьте хотя бы один показатель.</p>}
-            <p className="mt-4 text-sm text-muted">
-              Выделены доли хуже итоговой строки: просроченные и повторные выше более чем на 1 п.п., восстановленные права ниже более чем на 5 п.п. Доля просроченных считается по обращениям с наступившим сроком ответа; доля восстановленных прав: от завершенных дел с установленным нарушением. Все значения демонстрационные и не являются официальной статистикой.
+            <p className="mt-4 max-w-[80ch] text-sm text-muted">
+              Выделены доли хуже итоговой строки (только для строк, где не меньше 50 обращений): просроченные и повторные выше более чем на 1 п.п., восстановленные права ниже более чем на 5 п.п. Доля просроченных считается по обращениям с наступившим сроком ответа; доля восстановленных прав: от завершенных дел с установленным нарушением. Все значения демонстрационные и не являются официальной статистикой.
             </p>
           </article>
         )}

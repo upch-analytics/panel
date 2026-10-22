@@ -74,7 +74,7 @@ export interface Recommendation {
   why: string
   action: string
   /** куда вести: папка обращений и категория */
-  link?: { folder?: string; cat?: string }
+  link?: { folder?: string; cat?: string; sort?: string }
 }
 
 export interface CategoryInput { id: string; name: string; t: Totals; prev?: Totals }
@@ -102,7 +102,8 @@ export function recommendations(input: {
       metric: `${fmtPct(s.value)} при ${fmtPct(s.national)} по России, выше на ${fmtPp(s.value - s.national)} (в ${s.ratio.toFixed(1).replace('.', ',')} раза)`,
       why: 'Нарушение сроков снижает доверие заявителей и может указывать на перегрузку исполнителей или задержку ответов органов власти.',
       action: 'Рекомендуется проверить распределение нагрузки между ответственными исполнителями и причины нарушения сроков.',
-      link: { folder: 'overdue' },
+      // Действовать можно только по открытым просроченным: самые давние сверху
+      link: { folder: 'overdue_now', sort: 'overdue_desc' },
     })
     if (s.metric === 'repeat') out.push({
       id: 'repeat', level: s.level,
@@ -133,11 +134,12 @@ export function recommendations(input: {
       const m = input.munis.filter(x => x.prev > 0 && x.cur - x.prev >= 3).sort((a, b) => (b.cur - b.prev) - (a.cur - a.prev)).slice(0, 2)
       growthRecs.push({
         score: g,
-        id: `growth-${c.id}`, level: 'medium',
-        title: `Рост обращений: ${c.name.toLowerCase()}`,
+        // Рост числа обращений сам по себе не нарушение (принцип 3 DESIGN.md): информационный сигнал
+        id: `growth-${c.id}`, level: 'info',
+        title: `Заметный рост обращений: ${c.name.toLowerCase()}`,
         metric: `${numWord(c.t.rec, 'обращение', 'обращения', 'обращений')}, рост ${Math.round(g * 100)}% к тому же периоду прошлого года (было ${c.prev.rec})`,
-        why: m.length ? `Наибольший прирост обращений в территориях: ${m.map(x => x.name).join(', ')}.` : 'Рост заметно выше общей динамики обращений.',
-        action: m.length ? 'Рекомендуется провести дополнительный анализ ситуации в указанных территориях.' : 'Рекомендуется проанализировать структуру обращений по категории и выявить общие причины.',
+        why: `Рост может быть связан как с проблемой, так и с большей доступностью Уполномоченного.${m.length ? ` Наибольший прирост в территориях: ${m.map(x => x.name).join(', ')}.` : ''}`,
+        action: m.length ? 'Рекомендуется проанализировать причины роста в указанных территориях.' : 'Рекомендуется проанализировать причины роста обращений по категории.',
         link: { cat: c.id },
       })
     }
@@ -171,7 +173,7 @@ export function recommendations(input: {
 
   const order = { high: 0, medium: 1, info: 2 }
   out.sort((a, b) => order[a.level] - order[b.level])
-  if (!out.length) out.push({
+  if (!out.some(r => r.level !== 'info')) out.push({
     id: 'ok', level: 'info',
     title: 'Существенных отклонений не выявлено',
     metric: 'Доли просроченных, повторных обращений и восстановленных прав близки к общероссийским значениям',
